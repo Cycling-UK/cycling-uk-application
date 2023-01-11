@@ -1,0 +1,9 @@
+services:
+  cycling_uk_dynamics.connector:
+    class: Drupal\cycling_uk_dynamics\Connector
+    arguments: ['@config.factory', '@cache.discovery', '@logger.factory']
+
+  plugin.manager.dynamics.process:
+    class: Drupal\cycling_uk_dynamics\Plugin\ProcessPluginManager
+    parent: default_plugin_manager
+    arguments: ['@container.namespaces', '@cache.discovery', '@module_handler']

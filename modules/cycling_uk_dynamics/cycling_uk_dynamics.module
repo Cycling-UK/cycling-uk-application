@@ -1,0 +1,672 @@
+<?php
+
+/**
+ * @file
+ * Primary module hooks for Dynamics module.
+ */
+
+use Doctrine\Common\Annotations\AnnotationException;
+use Drupal\node\Entity\Node;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\webform\WebformInterface;
+use Drupal\Component\Plugin\Exception\PluginNotFoundException;
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_webform_third_party_settings_form_alter().
+ *
+ * @todo investigate hook_webform_options_WEBFORM_OPTIONS_ID_alter().
+ */
+function cycling_uk_dynamics_webform_third_party_settings_form_alter(
+  array &$form,
+  FormStateInterface $form_state
+) {
+  /** @var \Drupal\webform\WebformInterface $webform */
+  $webform = $form_state->getFormObject()->getEntity();
+
+  // We only show these elements if the dynamics_webform_handler has been
+  // attached to the webform.
+  try {
+    $webform->getHandler('dynamics_webform_handler');
+  }
+  catch (PluginNotFoundException $e) {
+    return;
+  }
+
+  // This contains the saved version of the Dynamics settings for this form.
+  $third_party_settings = $webform->getThirdPartySettings('dynamics');
+
+  // Count priority: form state, third party settings, default to 1.
+  $count = $form_state->get([
+    'third_party_settings',
+    'dynamics',
+    'count',
+  ])
+    ?? $third_party_settings['count']
+    ?? 1;
+
+  $form_state->set(['third_party_settings', 'dynamics', 'count'], $count);
+
+  // @todo unset any source or destination elements where (index > $count).
+  // @todo In corner cases new elements appear to be "pre-set" with old data.
+  // All the Dynamics elements are children of this details block.
+  $form['third_party_settings']['dynamics'] = [
+    '#type' => 'details',
+    '#title' => t('Dynamics settings'),
+    '#open' => TRUE,
+    '#prefix' => '<div id="dynamics-wrapper">',
+    '#suffix' => '</div>',
+  ];
+
+  // Turns out keeping a separate count actually made the code easier than
+  // counting the elements directly. Count gets saved along with the rest
+  // of the third party settings, ready to rebuild the form when needed.
+  $form['third_party_settings']['dynamics']['count'] = [
+    '#type' => 'hidden',
+    '#value' => $count,
+  ];
+
+  // Source options are always the same so we calculate them outside the loop.
+  $source_options = _dynamics_source_options($webform);
+
+  for ($i = 0; $i < $count; $i++) {
+    $form['third_party_settings']['dynamics'][$i] = [
+      '#type' => 'details',
+      '#title' => t('Map field to Dynamics'),
+      '#open' => TRUE,
+    ];
+
+    $form['third_party_settings']['dynamics'][$i]['source'] = [
+      '#type' => 'select',
+      '#title' => t('Source'),
+      '#options' => $source_options,
+      '#default_value' => $third_party_settings[$i]['source'] ?? '',
+      '#ajax' => [
+        'callback' => 'dynamics_change_callback',
+        'event' => 'change',
+        'wrapper' => "dynamics-wrapper-{$i}",
+        'method' => 'replaceWith',
+        'effect' => 'fade',
+      ],
+    ];
+
+    // Source priority: form state, third party settings, default to empty.
+    $source = $form_state->getValue([
+      'third_party_settings',
+      'dynamics',
+      $i,
+      'source',
+    ])
+      ?? $third_party_settings[$i]['source']
+      ?? NULL;
+
+    $source_type = _dynamics_get_type($webform, $source);
+
+    // Source priority: form state, third party settings, default to empty.
+    $destination = $form_state->getValue([
+      'third_party_settings',
+      'dynamics',
+      $i,
+      'destination',
+    ])
+      ?? $third_party_settings[$i]['destination']
+      ?? NULL;
+
+    $form['third_party_settings']['dynamics'][$i]['destination'] = [
+      '#type' => 'select',
+      '#title' => t('Destination'),
+      '#options' => _dynamics_destination_options($source_type),
+      '#default_value' => $destination,
+      '#prefix' => "<div id=\"dynamics-wrapper-{$i}\">",
+      '#suffix' => '</div>',
+    ];
+  }
+
+  $form['third_party_settings']['dynamics']['actions'] = [
+    '#type' => 'actions',
+  ];
+
+  $form['third_party_settings']['dynamics']['actions']['add_map'] = [
+    '#type' => 'submit',
+    '#value' => t('Add mapping'),
+    '#submit' => ['dynamics_add_one_callback'],
+    '#ajax' => [
+      'callback' => 'dynamics_rebuild_callback',
+      'wrapper' => 'dynamics-wrapper',
+      'method' => 'replaceWith',
+      'effect' => 'fade',
+    ],
+  ];
+
+  $form['third_party_settings']['dynamics']['actions']['remove_map'] = [
+    '#type' => 'submit',
+    '#value' => t('Remove mapping'),
+    '#submit' => ['dynamics_remove_one_callback'],
+    '#ajax' => [
+      'callback' => 'dynamics_rebuild_callback',
+      'wrapper' => 'dynamics-wrapper',
+      'method' => 'replaceWith',
+      'effect' => 'fade',
+    ],
+  ];
+
+  if ($count == 1) {
+    $form['third_party_settings']['dynamics']['actions']['remove_map']['#disabled'] = TRUE;
+  }
+}
+
+
+function _dynamics_get_applicant_data($data) {
+  $applicant_data = [];
+  $applicant_data['business_name'] = $data['general_business_name'];
+  $applicant_data['address'] = [
+    'country_code' => 'GB',
+    'company' => $data['general_business_name'],
+    'address_line1' => $data['address']['address'],
+    'address_line2' => $data['address']['address_2'],
+    'locality' => $data['address']['city'],
+    'administrative_area' => $data['county_business_based'],
+    'postal_code' => $data['address']['postal_code'],
+  ];
+  $applicant_data['facebook'] = $data['general_facebook'];
+  $applicant_data['twitter'] = $data['general_twitter'];
+  $applicant_data['instagram'] = $data['general_instagram'];
+
+  return $applicant_data;
+}
+
+/**
+ * Builds a List of destination options.
+ *
+ * Builds an array of Dynamics Attributes that can potentially accept data from
+ * the given $map_from .
+ *
+ * @param mixed $map_from
+ *   An annotation label from a plugin, or null.
+ *
+ * @return array
+ *   Array suitable for populating a form dropdown.
+ *
+ * @throws \Doctrine\Common\Annotations\AnnotationException
+ */
+function _dynamics_destination_options($map_from): array {
+  $destination_options = ['none' => t('None')];
+
+  // If no map_from sent, return array with just the 'None' element.
+  if ($map_from === NULL) {
+    return $destination_options;
+  }
+
+  /** @var \Drupal\dynamics\Connector $dynamics_connector */
+  $dynamics_connector = \Drupal::service('cycling_uk_dynamics.connector');
+
+  $entity_definitions = $dynamics_connector->getEntityDefinitions();
+
+  // Iterate over all the definitions.
+  foreach ($entity_definitions as $entity_definition) {
+    foreach ($entity_definition as $definition) {
+      // Get the AttributeType for the current definition.
+      $map_to = $definition['AttributeType'];
+      // If we find plugin that can map_from and map_to this combination,
+      // add it to dropdown.
+      if (_dynamics_plugin_exists($map_from, $map_to)) {
+        $key = $entity_definition->getLogicalName() . ':' . $definition['LogicalName'];
+        $value = $definition['LogicalName'] . ':' . $entity_definition->getLogicalName();
+        $destination_options[$key] = $value;
+      }
+    }
+  }
+
+  asort($destination_options);
+
+  return $destination_options;
+}
+
+/**
+ * Builds a list of source options.
+ *
+ * Builds an array of webform elements that are (a) in this form and (b) we have
+ * a Process plugin that can consume them.
+ *
+ * @param \Drupal\webform\WebformInterface $webform
+ *   Webform to interrogate.
+ *
+ * @return array
+ *   Array suitable for populating a form dropdown.
+ *
+ * @throws \Doctrine\Common\Annotations\AnnotationException
+ */
+function _dynamics_source_options(WebformInterface $webform): array {
+  $result = [];
+
+  // Get all the elements currently attached to this form.
+  $elements = $webform->getElementsInitializedAndFlattened();
+  $elements = _dynamics_source_options_tree($elements);
+
+  // Get the definitions of all the compatible Process plugins.
+  $plugin_definitions = \Drupal::service('plugin.manager.dynamics.process')
+    ->getDefinitions();
+
+  $types_we_can_process = _dynamics_plugins_get_map_from($plugin_definitions);
+
+  // If we have a plugin that can handle elements of this #type,
+  // add the element to the source list.
+  foreach ($elements as $element_name => $element) {
+    if (!in_array($element['#type'], $types_we_can_process)) {
+      continue;
+    }
+
+    if (empty($element['#title'])) {
+      continue;
+    }
+
+    $result[$element_name] = "{$element['#title']} ($element_name)";
+  }
+
+  asort($result);
+
+  return array_merge(
+    ['none' => t('None')],
+    $result
+  );
+}
+
+/**
+ * Returns a List of webform element types.
+ *
+ * Given an array of plugin definitions, return a list of the webform element
+ * types they can handle.
+ *
+ * @param array $plugin_definitions
+ *   List of plugin definitions.
+ *
+ * @return array
+ *   List of webform element types.
+ *
+ * @throws \Doctrine\Common\Annotations\AnnotationException
+ */
+function _dynamics_plugins_get_map_from(array $plugin_definitions) {
+  $result = [];
+
+  foreach ($plugin_definitions as $plugin_definition) {
+    if (empty($plugin_definition['map_from'])) {
+      throw new AnnotationException(
+        '@map_from annotation is required for Dynamics Process plugins'
+      );
+    }
+
+    $result[] = $plugin_definition['map_from'];
+  }
+
+  return array_unique($result);
+}
+
+/**
+ * Recurse over a webform element structure, flattening out composite fields.
+ *
+ * Note: This might balloon the size of a complex form. If you're hitting
+ * PHP memory limits while calling this function, don't unconditionally attach
+ * the $element to the $result array - only $element['#title'] and
+ * $element['#type'] are used currently.
+ *
+ * @todo Investigate use #webform_id to key the array, remove need for $parent.
+ *
+ * @param array $elements
+ *   Webform elements flattened into an associative array keyed by element name.
+ * @param string $parent
+ *   Leave empty when first calling.
+ *
+ * @return array
+ *   Array of 'parent:child' => 'type'.
+ */
+function _dynamics_source_options_tree(array $elements, string $parent = '') {
+  $result = [];
+
+  foreach ($elements as $element_name => $element) {
+    if (empty($parent)) {
+      $fully_qualified_element_name = $element_name;
+    }
+    else {
+      $fully_qualified_element_name = implode(':', [$parent, $element_name]);
+    }
+
+    $result[$fully_qualified_element_name] = $element;
+
+    if (
+      isset($element['#webform_composite'])
+      && $element['#webform_composite'] == TRUE
+      && !empty($element['#webform_composite_elements'])
+    ) {
+      $tmp = _dynamics_source_options_tree(
+        $element['#webform_composite_elements'],
+        $fully_qualified_element_name
+      );
+
+      $result = array_merge($result, $tmp);
+    }
+  }
+
+  return $result;
+}
+
+/**
+ * Returns the type of the named webform element.
+ *
+ * @param \Drupal\webform\WebformInterface $webform
+ *   A Webform object.
+ * @param mixed $name
+ *   List of keys.
+ *
+ * @return mixed
+ *   Name of type, or NULL.
+ */
+function _dynamics_get_type(WebformInterface $webform, $name) {
+  $elements = $webform->getElementsInitializedAndFlattened();
+  $keys = explode(':', $name);
+
+  return _dynamics_get_type_worker($elements, $keys);
+}
+
+/**
+ * Supports the _dynamics_get_type() function.
+ *
+ * @param array $elements
+ *   Webform array.
+ * @param array $keys
+ *   Array of keys.
+ */
+function _dynamics_get_type_worker(array $elements, array $keys) {
+  $key = array_shift($keys);
+
+  if (empty($keys)) {
+    return $elements[$key]['#type'];
+  }
+
+  if (empty($elements[$key]['#webform_composite_elements'])) {
+    return NULL;
+  }
+
+  return _dynamics_get_type_worker(
+    $elements[$key]['#webform_composite_elements'],
+    $keys
+  );
+}
+
+/**
+ * Custom Webform callback.
+ *
+ * When a Source option is selected, we call this to update the destination
+ * options.
+ *
+ * @param array $form
+ *   Drupal form.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   Drupal form state.
+ *
+ * @return array
+ *   Render array. Just the part of the form we are changing.
+ *
+ * @throws \Doctrine\Common\Annotations\AnnotationException
+ */
+function dynamics_change_callback(
+  array &$form,
+  FormStateInterface $form_state
+): array {
+  /** @var \Drupal\webform\Entity\Webform $webform */
+  $webform = $form_state->getFormObject()->getEntity();
+
+  $triggering_element = $form_state->getTriggeringElement();
+
+  $source = $triggering_element['#value'];
+  $source_type = _dynamics_get_type($webform, $source);
+
+  // Hard-coded value here. If form structure is changed, this needs
+  // to be changed.
+  $i = $triggering_element['#array_parents'][2];
+
+  $form['third_party_settings']['dynamics'][$i]['destination']['#options'] = _dynamics_destination_options($source_type);
+
+  return $form['third_party_settings']['dynamics'][$i]['destination'];
+}
+
+/**
+ * Submit handler for the "add-one" button.
+ *
+ * Increment the max counter and cause a form rebuild.
+ *
+ * @param array $form
+ *   Drupal form.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   Drupal form state.
+ */
+function dynamics_add_one_callback(
+  array &$form,
+  FormStateInterface $form_state
+) {
+  $count = $form_state->get([
+      'third_party_settings',
+      'dynamics',
+      'count',
+    ]) + 1;
+
+  $form_state->set([
+    'third_party_settings',
+    'dynamics',
+    'count',
+  ], $count);
+
+  $form_state->setRebuild();
+}
+
+/**
+ * Submit handler for the "remove-one" button.
+ *
+ * Decrement the max counter and cause a rebuild.
+ *
+ * @param array $form
+ *   Drupal form.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   Drupal form state.
+ */
+function dynamics_remove_one_callback(array &$form, FormStateInterface $form_state) {
+  $count = $form_state->get([
+      'third_party_settings',
+      'dynamics',
+      'count',
+    ]) - 1;
+
+  if ($count < 1) {
+    $count = 1;
+  }
+
+  $form_state->set([
+    'third_party_settings',
+    'dynamics',
+    'count',
+  ], $count);
+
+  $form_state->setRebuild();
+}
+
+/**
+ * Callback for Add and Remove buttons.
+ *
+ * Selects and returns the fieldset with the names in it.
+ *
+ * @param array $form
+ *   Drupal form.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   Drupal form state.
+ *
+ * @return array
+ *   Render array.
+ *
+ * @todo Scope of return could be smaller: just the mappings, not the whole
+ *   dynamics block.
+ */
+function dynamics_rebuild_callback(array &$form, FormStateInterface $form_state): array {
+  return $form['third_party_settings']['dynamics'];
+}
+
+/**
+ * Custom plugin validation.
+ *
+ * Returns TRUE if a process plugin exists that can transform from map_from to
+ * map_to, else FALSE.
+ *
+ * @param string $map_from
+ *   Type plugin should map from.
+ * @param string $map_to
+ *   Type plugin should map to.
+ *
+ * @return bool
+ *   TRUE if an appropriate plugin exists.
+ *
+ * @throws \Doctrine\Common\Annotations\AnnotationException
+ */
+function _dynamics_plugin_exists(string $map_from, string $map_to): bool {
+  $plugin_definitions = \Drupal::service('plugin.manager.dynamics.process')
+    ->getDefinitions();
+
+  foreach ($plugin_definitions as $plugin_definition) {
+    if (empty($plugin_definition['map_from'])) {
+      throw new AnnotationException(
+        '@map_from annotation is required for Dynamics Process plugins'
+      );
+    }
+
+    if (empty($plugin_definition['map_to'])) {
+      throw new AnnotationException(
+        '@map_to annotation is required for Dynamics Process plugins'
+      );
+    }
+
+    if (
+      $plugin_definition['map_from'] == $map_from
+      && $plugin_definition['map_to'] == $map_to
+    ) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Custom ownership validation.
+ *
+ * Figure out if this application_process node should be owned by the current
+ * user.
+ *
+ * @param \Drupal\node\Entity\Node $node
+ *   A Node object.
+ *
+ * @return bool
+ *   A flag. It's TRUE if a Node has the "mine" type.
+ *
+ * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+ */
+function _dynamics_is_this_mine(Node $node): bool {
+  $entityReferenceItem = $node->get('field_lead')->first();
+
+  if ($entityReferenceItem != NULL) {
+    /** @var \Drupal\Core\Entity\Plugin\DataType\EntityReference $entityReference */
+    $entityReference = $entityReferenceItem->get('entity');
+
+    /** @var \Drupal\Core\Entity\EntityInterface $referencedEntity */
+    $leadFormResult = $entityReference->getTarget()->getValue();
+
+    if (_dynamics_is_this_lead_mine($leadFormResult) == TRUE) {
+      return TRUE;
+    }
+  }
+
+  $entityReferenceItem = $node->get('field_application_form')->first();
+
+  if ($entityReferenceItem != NULL) {
+    /** @var \Drupal\Core\Entity\Plugin\DataType\EntityReference $entityReference */
+    $entityReference = $entityReferenceItem->get('entity');
+
+    /** @var \Drupal\Core\Entity\EntityInterface $referencedEntity */
+    $opportunityFormResult = $entityReference->getTarget()->getValue();
+
+    if (_dynamics_is_this_opportunity_mine($opportunityFormResult) == TRUE) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Determines whether a lead form should be owned by the current user.
+ *
+ * @param \Drupal\Core\Entity\EntityInterface $leadFormResult
+ *   A Webform object.
+ *
+ * @return bool
+ *   A flag. It's TRUE if a Webform has the "lead" type.
+ */
+function _dynamics_is_this_lead_mine(
+  EntityInterface $leadFormResult
+): bool {
+  $user = \Drupal::currentUser();
+  $user_email = $user->getEmail();
+
+  $data = $leadFormResult->getData();
+
+  // @todo get key for lead form email address.
+  $form_email = $data['contact']['email'];
+
+  return $user_email == $form_email;
+}
+
+/**
+ * Determines whether an opportunity form should be owned by the current user.
+ *
+ * @param \Drupal\Core\Entity\EntityInterface $opportunityFormResult
+ *   A Webform object.
+ *
+ * @return bool
+ *   A flag. It's TRUE if a Webform has the "opportunity" type.
+ */
+function _dynamics_is_this_opportunity_mine(
+  EntityInterface $opportunityFormResult
+): bool {
+  $user = \Drupal::currentUser();
+  $user_email = $user->getEmail();
+
+  $webform_id = $opportunityFormResult->getWebform()->id();
+  $data = $opportunityFormResult->getData();
+
+  switch ($webform_id) {
+    case 'cfp_accreditation_application':
+      $email_key = 'general_primary_contact_email';
+      break;
+
+    case 'cyclists_welcome_questionnaire':
+      $email_key = 'primary_contact_email_address';
+      break;
+  }
+
+  $form_email = $data[$email_key];
+
+  return $user_email == $form_email;
+}
+
+/**
+ * Claim this application_process node.
+ *
+ * Claim this application_process node, and all its children, for the current
+ * user.
+ *
+ * @param \Drupal\node\Entity\Node $node
+ *   A Node object.
+ *
+ * @throws \Drupal\Core\Entity\EntityStorageException
+ */
+function _dynamics_claim(Node $node) {
+  $user = \Drupal::currentUser();
+  $node->setOwnerId($user->id());
+  $node->save();
+}

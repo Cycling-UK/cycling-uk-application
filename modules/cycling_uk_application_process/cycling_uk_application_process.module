@@ -1,0 +1,84 @@
+<?php
+
+/**
+ * @file
+ * Provides a cycling uk application process entity type.
+ */
+
+use Drupal\Core\Render\Element;
+use Drupal\cycling_uk_application_process\Entity\CyclingUkApplicationProcess;
+use Drupal\user\UserInterface;
+
+/**
+ * Implements hook_theme().
+ */
+function cycling_uk_application_process_theme() {
+  return [
+    'cycling_uk_application_process' => [
+      'render element' => 'elements',
+    ],
+  ];
+}
+
+/**
+ * Prepares variables for cycling uk application process templates.
+ *
+ * Default template: cycling-uk-application-process.html.twig.
+ *
+ * @param array $variables
+ *   An associative array containing:
+ *   - elements: An associative array containing the cycling uk application process information and any
+ *     fields attached to the entity.
+ *   - attributes: HTML attributes for the containing element.
+ */
+function template_preprocess_cycling_uk_application_process(array &$variables) {
+  $variables['view_mode'] = $variables['elements']['#view_mode'];
+  foreach (Element::children($variables['elements']) as $key) {
+    $variables['content'][$key] = $variables['elements'][$key];
+  }
+}
+
+/**
+ * Implements hook_user_cancel().
+ */
+function cycling_uk_application_process_user_cancel($edit, UserInterface $account, $method) {
+  switch ($method) {
+    case 'user_cancel_block_unpublish':
+      // Unpublish cycling uk application processes.
+      $storage = \Drupal::entityTypeManager()->getStorage('cycling_uk_application_process');
+      $cycling_uk_application_process_ids = $storage->getQuery()
+        ->condition('uid', $account->id())
+        ->condition('status', 1)
+        ->execute();
+      foreach ($storage->loadMultiple($cycling_uk_application_process_ids) as $cycling_uk_application_process) {
+        $cycling_uk_application_process->set('status', FALSE);
+        $cycling_uk_application_process->save();
+      }
+      break;
+
+    case 'user_cancel_reassign':
+      // Anonymize cycling uk application processes.
+      $storage = \Drupal::entityTypeManager()->getStorage('cycling_uk_application_process');
+      $cycling_uk_application_process_ids = $storage->getQuery()
+        ->condition('uid', $account->id())
+        ->execute();
+      foreach ($storage->loadMultiple($cycling_uk_application_process_ids) as $cycling_uk_application_process) {
+        $cycling_uk_application_process->setOwnerId(0);
+        $cycling_uk_application_process->save();
+      }
+      break;
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_predelete() for user entities.
+ */
+function cycling_uk_application_process_user_predelete(UserInterface $account) {
+  // Delete cycling uk application processes.
+  $storage = \Drupal::entityTypeManager()->getStorage('cycling_uk_application_process');
+  $cycling_uk_application_process_ids = $storage->getQuery()
+    ->condition('uid', $account->id())
+    ->execute();
+  $cycling_uk_application_processes = $storage->loadMultiple($cycling_uk_application_process_ids);
+  $storage->delete($cycling_uk_application_processes);
+}

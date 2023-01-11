@@ -1,0 +1,22 @@
+entity.cycling_uk_application_type.settings:
+  title: Settings
+  route_name: entity.cycling_uk_application_type.settings
+  base_route: entity.cycling_uk_application_type.settings
+entity.cycling_uk_application_type.view:
+  title: View
+  route_name: entity.cycling_uk_application_type.canonical
+  base_route: entity.cycling_uk_application_type.canonical
+entity.cycling_uk_application_type.edit_form:
+  title: Edit
+  route_name: entity.cycling_uk_application_type.edit_form
+  base_route: entity.cycling_uk_application_type.canonical
+entity.cycling_uk_application_type.delete_form:
+  title: Delete
+  route_name: entity.cycling_uk_application_type.delete_form
+  base_route: entity.cycling_uk_application_type.canonical
+  weight: 10
+entity.cycling_uk_application_type.collection:
+  title: Cycling UK application type
+  route_name: entity.cycling_uk_application_type.collection
+  base_route: system.admin_content
+  weight: 10

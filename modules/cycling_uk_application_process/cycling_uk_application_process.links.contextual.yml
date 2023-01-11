@@ -1,0 +1,10 @@
+entity.cycling_uk_application_process.edit_form:
+  route_name: entity.cycling_uk_application_process.edit_form
+  group: cycling_uk_application_process
+  title: Edit
+
+entity.cycling_uk_application_process.delete_form:
+  route_name: entity.cycling_uk_application_process.delete_form
+  group: cycling_uk_application_process
+  title: Delete
+  weight: 10

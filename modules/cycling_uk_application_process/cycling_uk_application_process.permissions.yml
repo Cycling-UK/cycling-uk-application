@@ -1,0 +1,11 @@
+administer cycling uk application process:
+  title: 'Administer cycling uk application process settings'
+  restrict access: true
+delete cycling uk application process:
+  title: Delete cycling uk application process
+create cycling uk application process:
+  title: Create cycling uk application process
+view cycling uk application process:
+  title: View cycling uk application process
+edit cycling uk application process:
+  title: Edit cycling uk application process

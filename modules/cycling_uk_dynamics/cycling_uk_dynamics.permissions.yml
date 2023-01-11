@@ -1,0 +1,4 @@
+administer dynamics configuration:
+  title: 'Administer dynamics configuration'
+  description: 'Administer dynamics configuration.'
+  restrict access: true

@@ -1,0 +1,7 @@
+name: Cycling UK application process
+type: module
+description: Provides additional functionality for the site.
+package: Cycling UK
+core_version_requirement: ^9 || ^10
+dependencies:
+  - cycling_uk_application:cycling_uk_application

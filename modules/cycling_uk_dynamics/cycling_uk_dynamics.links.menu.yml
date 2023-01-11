@@ -1,0 +1,13 @@
+cycling_uk_dynamics.settings_form:
+  title: 'Dynamics settings'
+  description: 'Configure Dynamics.'
+  parent: system.admin_config_system
+  route_name: cycling_uk_dynamics.settings_form
+  weight: 10
+
+cycling_uk_dynamics.actions_form:
+  title: 'Dynamics actions'
+  description: 'Test Dynamics.'
+  parent: cycling_uk_dynamics.settings_form
+  route_name: cycling_uk_dynamics.actions_form
+  weight: 10

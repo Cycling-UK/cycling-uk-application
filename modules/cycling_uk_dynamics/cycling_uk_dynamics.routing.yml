@@ -1,0 +1,15 @@
+cycling_uk_dynamics.settings_form:
+  path: '/admin/config/system/dynamics'
+  defaults:
+    _title: 'Dynamics settings'
+    _form: 'Drupal\cycling_uk_dynamics\Form\SettingsForm'
+  requirements:
+    _permission: 'administer dynamics configuration'
+
+cycling_uk_dynamics.actions_form:
+  path: '/admin/config/system/dynamics/actions'
+  defaults:
+    _title: 'Dynamics actions'
+    _form: 'Drupal\cycling_uk_dynamics\Form\ActionsForm'
+  requirements:
+    _permission: 'administer dynamics configuration'

@@ -1,0 +1,16 @@
+instance_uri: 'https://cyclingukdev.crm11.dynamics.com/'
+application_id: ae6a4d62-f0bf-42c6-bf26-e7265a4678f0
+endpoint: 'https://cyclingukdev.api.crm11.dynamics.com/api/data/v9.2/'
+entity_whitelist:
+  - lead
+  - contact
+  - opportunity
+auto_qualified_enable: 1
+auto_qualified_success_threshold: '50'
+auto_qualified_questions:
+  - overnight_public_transport_access
+  - overnight_water_refill
+  - overnight_first_aid
+  - hospitality_public_transport_access
+  - hospitality_water_refill
+  - hospitality_first_aid

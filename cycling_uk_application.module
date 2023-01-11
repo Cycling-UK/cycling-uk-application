@@ -1,0 +1,290 @@
+<?php
+
+use \Drupal\Core\Form\FormStateInterface;
+
+function _cycling_uk_application_application_type_options() {
+  $entityStorage = \Drupal::entityTypeManager()->getStorage('cycling_uk_application_type');
+  $applicationTypes = $entityStorage->loadByProperties(['status' => TRUE]);
+  $options = [];
+  /** @var \Drupal\cycling_uk_application_type\Entity\CyclingUkApplicationType $applicationType */
+  foreach ($applicationTypes as $applicationType) {
+    $options[$applicationType->getMachineName()] = $applicationType->getTitle();
+  };
+  return $options;
+}
+
+/**
+ * Implements hook_application_webform_third_party_settings_form_alter().
+ */
+function cycling_uk_application_webform_third_party_settings_form_alter(&$form, FormStateInterface $form_state) {
+
+  /** @var \Drupal\webform\WebformInterface $webform */
+  $webform = $form_state->getFormObject()->getEntity();
+  try {
+    $webform->getHandler('application_webform_handler');
+  }
+  catch (\Drupal\Component\Plugin\Exception\PluginNotFoundException $e) {
+    return;
+  }
+
+  $form['third_party_settings']['cycling_uk_application'] = [
+    '#type' => 'details',
+    '#title' => t('Cycling UK application'),
+    '#open' => TRUE,
+  ];
+  $form['third_party_settings']['cycling_uk_application']['stage'] = [
+    '#type' => 'select',
+    '#title' => t('Stage'),
+    '#options' => ['lead' => 'Lead', 'application' => 'Application'],
+    '#default_value' => $webform->getThirdPartySetting('cycling_uk_application', 'stage'),
+    '#return_value' => TRUE,
+    '#required' => TRUE,
+  ];
+  $form['third_party_settings']['cycling_uk_application']['type'] = [
+    '#type' => 'select',
+    '#title' => t('Type'),
+    '#options' => _cycling_uk_application_application_type_options(),
+    '#default_value' => $webform->getThirdPartySetting('cycling_uk_application', 'type'),
+    '#return_value' => TRUE,
+    '#required' => TRUE,
+  ];
+}
+
+/**
+ * Implements hook_theme().
+ */
+function cycling_uk_application_theme() {
+  return [
+    'webform_element_dynamics_html' => [
+      'variables' => [
+        'element' => [],
+        'title' => NULL,
+        'value' => NULL,
+        'items' => NULL,
+        'webform_submission' => NULL,
+        'options' => [],
+      ],
+    ],
+    'webform_element_dynamics_text' => [
+      'variables' => [
+        'element' => [],
+        'title' => NULL,
+        'value' => NULL,
+        'items' => NULL,
+        'webform_submission' => NULL,
+        'options' => [],
+      ],
+    ],
+  ];
+}
+
+
+/**
+ * Implements hook_entity_view_alter().
+ */
+function cycling_uk_application_entity_view_alter(
+  array &$build,
+  \Drupal\Core\Entity\EntityInterface $entity,
+  \Drupal\Core\Entity\Display\EntityViewDisplayInterface $display
+): void {
+  if ($entity->getEntityTypeId() === 'webform_submission') {
+    $elements = $entity
+      ->getWebform()
+      ->getElementsInitialized();
+
+    $displayMods = [
+      'text',
+      'html',
+    ];
+
+    // Hide group if dynamics_confirmation should be hidden.
+    if (in_array($build['#view_mode'], $displayMods)) {
+      foreach ($elements as $element) {
+        $pluginData = _dynamics_get_plugin_data($element);
+
+        if (!empty($pluginData)) {
+          foreach ($pluginData as $dataItem) {
+            if (
+              isset($dataItem['plugin_id'])
+              && (
+                $dataItem['plugin_id'] === 'dynamics_confirmation'
+                && !isset($dataItem['access_roles'])
+              )
+            ) {
+              if ($build['#view_mode'] === 'text') {
+                unset($build['data']['#code'][$element['#webform_key']]);
+              }
+              else {
+                unset($build['data']['administration_group']);
+              }
+            }
+          }
+        }
+      }
+    }
+    else {
+      if ($build['#view_mode'] === 'table') {
+        // Update data from the table.
+        $data = $entity->getData();
+
+        if (!empty($data)) {
+          foreach ($elements as $element) {
+            $pluginData = _dynamics_get_plugin_data($element);
+
+            if (!empty($pluginData)) {
+              foreach ($pluginData as $datItem) {
+                $pluginName = $datItem['plugin_name'];
+
+                if (
+                  isset($data[$pluginName])
+                  && (
+                    $datItem['plugin_id'] === 'dynamics_question'
+                    || isset($datItem['user_access'])
+                  )
+                ) {
+                  if ($data[$pluginName]) {
+                    // phpcs:ignore
+                    $pluginValues = @unserialize($data[$pluginName]);
+                    $elementValue = '';
+
+                    foreach ($pluginValues as $key => $valueItem) {
+                      if ($key === 'file_fid') {
+                        if ($valueItem) {
+                          // phpcs:ignore
+                          $file = \Drupal\file\Entity\File::load($valueItem);
+                          $valueItem = [];
+                          $valueItem['value'] = '';
+                          $valueItem['title'] = $element[$pluginName]['#file_title'];
+
+                          if ($file) {
+                            $uri = $file->getFileUri();
+                            $url = \Drupal\Core\Url::fromUri(\Drupal::service('file_url_generator')
+                              ->generateAbsoluteString($uri));
+
+                            $valueItem['value'] = \Drupal\Core\Link::fromTextAndUrl(
+                              $element[$pluginName]['#file_title'],
+                              $url
+                            );
+                          }
+                        }
+                        else {
+                          $valueItem['value'] = '';
+                          $valueItem['title'] = $element[$pluginName]['#file_title'];
+                        }
+                      }
+
+                      if (
+                        $key === 'details'
+                        && isset($element[$pluginName]['#details_type'])
+                        && $element[$pluginName]['#details_type'] === 'select'
+                      ) {
+                        $valueItem['value'] = $element[$pluginName]['#details_options'][$valueItem['value']] ?? '';
+                      }
+
+                      if (is_string($valueItem)) {
+                        $value = $valueItem;
+                        $title = ucfirst($key);
+                      }
+                      else {
+                        $value = $valueItem['value'];
+                        $title = $valueItem['title'] . ':';
+                      }
+
+                      if ($value instanceof \Drupal\Core\Link) {
+                        $title = '';
+                        $value = $value->toString();
+                      }
+
+                      $elementValue .= '';
+
+                      if ($value !== '') {
+                        $elementValue .= '<b>' . $title . '</b> ' . $value . '<br />';
+                      }
+                    }
+
+                    $build['data']['#rows'][$pluginName][1]['data'] = \Drupal\Core\Render\Markup::create($elementValue);
+                  }
+                }
+                else {
+                  unset($build['data']['#rows'][$pluginName]);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Get plugin name, id and user access helper function.
+ *
+ * @param array $element
+ *   The Webform element.
+ *
+ * @return array
+ *   List of plugins.
+ */
+function _dynamics_get_plugin_data(array $element): array {
+  $pluginData = [];
+
+  $plugins = [
+    'dynamics_confirmation',
+    'dynamics_question',
+  ];
+
+  if (
+    isset($element['#webform_plugin_id'])
+    && in_array($element['#webform_plugin_id'], $plugins)
+  ) {
+    $pluginId = $element['#webform_plugin_id'];
+    $pluginData[$pluginId]['plugin_name'] = $element['#webform_key'];
+    $pluginData[$pluginId]['plugin_id'] = $pluginId;
+
+    $pluginData[]['access_roles'] = _get_user_access($element);
+  }
+  else {
+    foreach ($element as $element_item) {
+      if (
+        is_array($element_item)
+        && isset($element_item['#webform_plugin_id'])
+        && in_array($element_item['#webform_plugin_id'], $plugins)
+      ) {
+        $pluginName = $element_item['#webform_key'];
+        $pluginData[$pluginName]['plugin_name'] = $pluginName;
+        $pluginData[$pluginName]['plugin_id'] = $element_item['#webform_plugin_id'];
+        $pluginData[$pluginName]['access_roles'] = _get_user_access($element_item);
+      }
+    }
+  }
+
+  return $pluginData;
+}
+
+/**
+ * Get user roles available for view Confirmation plugin.
+ *
+ * @param array $element
+ *   The Webform element.
+ *
+ * @return array
+ *   List of User roles.
+ */
+function _get_user_access(array $element): array {
+  $accessRoles = [];
+  $roles = [];
+
+  if (isset($element['#roles'])) {
+    foreach ($element['#roles'] as $role) {
+      if ($role !== 0) {
+        $roles[] = $role;
+      }
+    }
+
+    $userRoles = \Drupal::currentUser()->getRoles();
+    $accessRoles = array_intersect($userRoles, $roles);
+  }
+
+  return $accessRoles;
+}

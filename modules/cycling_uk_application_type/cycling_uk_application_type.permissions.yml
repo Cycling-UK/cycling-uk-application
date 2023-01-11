@@ -1,0 +1,13 @@
+administer cycling uk application type:
+  title: 'Administer cycling uk application type settings'
+  restrict access: true
+access cycling uk application type overview:
+  title: 'Access cycling uk application type overview page'
+delete cycling uk application type:
+  title: Delete cycling uk application type
+create cycling uk application type:
+  title: Create cycling uk application type
+view cycling uk application type:
+  title: View cycling uk application type
+edit cycling uk application type:
+  title: Edit cycling uk application type

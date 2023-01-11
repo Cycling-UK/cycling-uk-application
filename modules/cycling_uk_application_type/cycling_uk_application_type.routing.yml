@@ -1,0 +1,7 @@
+entity.cycling_uk_application_type.settings:
+  path: 'admin/structure/cycling-uk-application-type'
+  defaults:
+    _form: '\Drupal\cycling_uk_application_type\Form\CyclingUkApplicationTypeSettingsForm'
+    _title: 'Cycling UK application type'
+  requirements:
+    _permission: 'administer cycling uk application type'

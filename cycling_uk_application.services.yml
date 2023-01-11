@@ -1,0 +1,6 @@
+services:
+  cycling_uk_application.event_subscriber:
+    class: Drupal\cycling_uk_application\EventSubscriber\CyclingUkApplicationSubscriber
+    arguments: ['@entity.repository']
+    tags:
+      - { name: event_subscriber }

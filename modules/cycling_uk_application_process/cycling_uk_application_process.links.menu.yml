@@ -1,0 +1,10 @@
+entity.cycling_uk_application_process.settings:
+  title: 'Cycling uk application process'
+  description: 'Configure a Cycling uk application process entity type.'
+  route_name:  entity.cycling_uk_application_process.settings
+  parent: system.admin_structure
+entity.cycling_uk_application_process.collection:
+  title: 'Cycling uk application processes'
+  description: 'List of cycling uk application processes.'
+  route_name: entity.cycling_uk_application_process.collection
+  parent: system.admin_content
