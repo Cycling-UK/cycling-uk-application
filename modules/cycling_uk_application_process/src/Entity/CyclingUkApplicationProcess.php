@@ -240,11 +240,10 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
       ->setLabel(t('Status'))
       ->setSettings([
         'allowed_values' => [
-          'draft' => 'Draft',
           'ready_for_review' => 'Ready for review',
-          'incomplete' => 'Incomplete',
           'awaiting_further_info' => 'Awaiting further information',
           'qualified' => 'Qualified',
+          'failed' => 'Failed',
         ],
       ])
       ->setCardinality(1)
