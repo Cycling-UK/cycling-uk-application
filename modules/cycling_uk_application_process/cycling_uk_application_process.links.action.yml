@@ -1,5 +1,5 @@
 cycling_uk_application_process.add_form:
-  title: 'Add cycling uk application process'
+  title: 'Add application'
   route_name: entity.cycling_uk_application_process.add_form
   appears_on:
     - entity.cycling_uk_application_process.collection

@@ -4,7 +4,7 @@ entity.cycling_uk_application_process.settings:
   route_name:  entity.cycling_uk_application_process.settings
   parent: system.admin_structure
 entity.cycling_uk_application_process.collection:
-  title: 'Cycling uk application processes'
+  title: 'Applications'
   description: 'List of cycling uk application processes.'
   route_name: entity.cycling_uk_application_process.collection
-  parent: system.admin_content
+  parent: system.admin

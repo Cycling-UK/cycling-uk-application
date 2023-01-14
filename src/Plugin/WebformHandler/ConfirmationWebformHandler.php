@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\dynamics\Plugin\WebformHandler;
+namespace Drupal\cycling_uk_application\Plugin\WebformHandler;
 
 use Drupal\webform\Plugin\WebformHandlerBase;
 use Drupal\webform\WebformSubmissionInterface;

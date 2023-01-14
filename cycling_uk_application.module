@@ -288,3 +288,9 @@ function _get_user_access(array $element): array {
 
   return $accessRoles;
 }
+
+function cycling_uk_application_page_attachments(array &$attachments) {
+  if (\Drupal::currentUser()->isAuthenticated()) {
+    $attachments['#attached']['library'][] = 'cycling_uk_application/toolbar';
+  }
+}

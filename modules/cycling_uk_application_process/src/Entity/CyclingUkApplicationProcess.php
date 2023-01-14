@@ -50,7 +50,7 @@ use Drupal\webform\WebformSubmissionInterface;
  *     "owner" = "uid",
  *   },
  *   links = {
- *     "collection" = "/admin/content/cycling-uk-application-process",
+ *     "collection" = "/admin/applications",
  *     "add-form" = "/cycling-uk-application-process/add",
  *     "canonical" = "/cycling-uk-application-process/{cycling_uk_application_process}",
  *     "edit-form" = "/cycling-uk-application-process/{cycling_uk_application_process}/edit",
@@ -99,34 +99,6 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
   /**
    * {@inheritdoc}
    */
-  public function getApplicationType() {
-    if (!$this->hasWebformSubmission()) {
-      return FALSE;
-    }
-    $webformSubmission = $this->getWebformSubmission();
-    $webform = $webformSubmission->getWebform();
-    $applicationTypeKey = $webform->getThirdPartySetting(
-      'cycling_uk_application',
-      'type',
-      FALSE
-    );
-    if (!$applicationTypeKey) {
-      return FALSE;
-    }
-    $applicationTypeStorage = $this->entityTypeManager()
-      ->getStorage('cycling_uk_application_type');
-    $applicationTypeResults = $applicationTypeStorage->getQuery()
-      ->condition('machine_name', $applicationTypeKey)
-      ->execute();
-    if (empty($applicationTypeResults)) {
-      return FALSE;
-    }
-    return $applicationTypeStorage->load(reset($applicationTypeResults));
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getWebformSubmission() : WebformSubmissionInterface {
     return $this->get('webform_submission')->entity;
   }
@@ -140,6 +112,21 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
    */
   public function setWebformSubmission(WebformSubmissionInterface $webformSubmission) : CyclingUkApplicationProcessInterface {
     $this->set('webform_submission', $webformSubmission->id());
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getApplicationType() : CyclingUkApplicationType {
+    return $this->get('application_type')->entity;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setApplicationType(CyclingUkApplicationType $applicationType) : CyclingUkApplicationProcessInterface {
+    $this->set('application_type', $applicationType->id());
     return $this;
   }
 
@@ -203,6 +190,28 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
       ->setRequired(TRUE)
       ->setDescription(t('The Webform Submission associated with this item.'))
       ->setSetting('target_type', 'webform_submission')
+      ->setDisplayOptions('form', [
+        'type' => 'entity_reference_autocomplete',
+        'settings' => [
+          'match_operator' => 'CONTAINS',
+          'size' => 60,
+          'placeholder' => '',
+        ],
+        'weight' => 1,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'hidden',
+        'type' => 'entity_reference_label',
+        'weight' => 0,
+      ])
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['application_type'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Application type'))
+      ->setRequired(TRUE)
+      ->setDescription(t('The Application type associated with this item.'))
+      ->setSetting('target_type', 'cycling_uk_application_type')
       ->setDisplayOptions('form', [
         'type' => 'entity_reference_autocomplete',
         'settings' => [

@@ -1,5 +1,5 @@
 cycling_uk_application_type.add_form:
   route_name: entity.cycling_uk_application_type.add_form
-  title: 'Add cycling uk application type'
+  title: 'Add type'
   appears_on:
     - entity.cycling_uk_application_type.collection
