@@ -5,3 +5,11 @@ entity.cycling_uk_application_type.settings:
     _title: 'Cycling UK application type'
   requirements:
     _permission: 'administer cycling uk application type'
+
+entity.cycling_uk_application_type.collection:
+  path: '/admin/applications/types'
+  defaults:
+    _entity_list: 'cycling_uk_application_type'
+    _title: 'Roles'
+  requirements:
+    _permission: 'administer permissions'

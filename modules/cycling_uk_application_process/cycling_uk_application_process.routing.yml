@@ -5,3 +5,11 @@ entity.cycling_uk_application_process.settings:
     _title: 'Cycling uk application process'
   requirements:
     _permission: 'administer cycling uk application process'
+
+entity.cycling_uk_application_process.collection:
+  path: '/admin/applications'
+  defaults:
+    _entity_list: 'cycling_uk_application_process'
+    _title: 'Applications'
+  requirements:
+    _permission: 'administer users'

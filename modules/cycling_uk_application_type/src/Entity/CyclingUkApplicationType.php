@@ -43,7 +43,7 @@ use Drupal\user\UserInterface;
  *     "canonical" = "/cycling_uk_application_type/{cycling_uk_application_type}",
  *     "edit-form" = "/admin/content/cycling-uk-application-type/{cycling_uk_application_type}/edit",
  *     "delete-form" = "/admin/content/cycling-uk-application-type/{cycling_uk_application_type}/delete",
- *     "collection" = "/admin/content/cycling-uk-application-type"
+ *     "collection" = "/admin/applications/types"
  *   },
  *   field_ui_base_route = "entity.cycling_uk_application_type.settings"
  * )
