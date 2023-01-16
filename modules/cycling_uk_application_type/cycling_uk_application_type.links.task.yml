@@ -16,7 +16,7 @@ entity.cycling_uk_application_type.delete_form:
   base_route: entity.cycling_uk_application_type.canonical
   weight: 10
 entity.cycling_uk_application_type.collection:
-  title: Cycling UK application type
+  title: Types
   route_name: entity.cycling_uk_application_type.collection
-  base_route: system.admin_content
+  base_route: entity.cycling_uk_application_process.collection
   weight: 10

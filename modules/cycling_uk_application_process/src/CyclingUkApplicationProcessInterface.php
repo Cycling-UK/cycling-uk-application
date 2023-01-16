@@ -21,6 +21,13 @@ interface CyclingUkApplicationProcessInterface extends ContentEntityInterface, E
   public function getApplicationType();
 
   /**
+   * @param \Drupal\cycling_uk_application_type\Entity\CyclingUkApplicationType $applicationType
+   *
+   * @return \Drupal\cycling_uk_application_process\CyclingUkApplicationProcessInterface
+   */
+  public function setApplicationType(CyclingUkApplicationType $applicationType) : CyclingUkApplicationProcessInterface;
+
+  /**
    * @return \Drupal\webform\WebformSubmissionInterface
    */
   public function getWebformSubmission() : WebformSubmissionInterface;

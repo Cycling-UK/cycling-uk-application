@@ -3,8 +3,3 @@ entity.cycling_uk_application_type.settings:
   description: Configure a Cycling UK application type entity type
   route_name:  entity.cycling_uk_application_type.settings
   parent: system.admin_structure
-entity.cycling_uk_application_type.collection:
-  title: Cycling UK application types
-  description: List of cycling uk application types
-  route_name: entity.cycling_uk_application_type.collection
-  parent: system.admin_content

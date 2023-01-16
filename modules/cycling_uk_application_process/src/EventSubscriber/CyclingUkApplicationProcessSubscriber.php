@@ -39,11 +39,32 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
     /** @var \Drupal\cycling_uk_application_process\CyclingUkApplicationProcessInterface $applicationProcess */
     $applicationProcess = $applicationProcessStorage->create();
     $webformSubmission = $event->webformSubmission;
+    $webform = $webformSubmission->getWebform();
+    $applicationTypeKey = $webform->getThirdPartySetting(
+      'cycling_uk_application',
+      'type',
+      FALSE
+    );
+    $applicationType = NULL;
+    if ($applicationTypeKey) {
+      $applicationTypeStorage = $this->entityTypeManager
+        ->getStorage('cycling_uk_application_type');
+      $applicationTypeResults = $applicationTypeStorage->getQuery()
+        ->condition('machine_name', $applicationTypeKey)
+        ->execute();
+      $applicationType = !empty($applicationTypeResults) ? $applicationTypeStorage->load(reset($applicationTypeResults)) : FALSE;
+    }
+
     $dynamicsId = $event->dynamicsId;
     $applicationProcess
       ->setWebformSubmission($webformSubmission)
-      ->setDynamicsId($dynamicsId)
-      ->save();
+      ->setDynamicsId($dynamicsId);
+
+    if ($applicationType) {
+      $applicationProcess->setApplicationType($applicationType);
+    }
+    $applicationProcess->save();
+
   }
 
   /**
