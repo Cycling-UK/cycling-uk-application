@@ -256,7 +256,7 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
         ],
       ])
       ->setCardinality(1)
-      ->setDefaultValue('draft')
+      ->setDefaultValue('ready_for_review')
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'list_default',
