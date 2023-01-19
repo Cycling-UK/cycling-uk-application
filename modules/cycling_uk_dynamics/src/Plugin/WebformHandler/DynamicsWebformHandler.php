@@ -84,6 +84,7 @@ final class DynamicsWebformHandler extends WebformHandlerBase {
       $item = [
         'webform_submission_id' => $webformSubmission->id(),
         'destination_entity' => $destinationEntity,
+        'action' => 'create',
         'data' => $data,
       ];
       $preQueueEvent = new PreDynamicsItemQueueEvent($webform, $item);

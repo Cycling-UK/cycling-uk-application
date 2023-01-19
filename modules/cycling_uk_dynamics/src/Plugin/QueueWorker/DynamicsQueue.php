@@ -24,7 +24,15 @@ class DynamicsQueue extends QueueWorkerBase {
      */
     $dynamicsConnector = \Drupal::service('cycling_uk_dynamics.connector');
 
-    $dynamicsConnector->create($data);
+    switch ($data['action']) {
+      case 'create':
+        $dynamicsConnector->create($data);
+        break;
+      case 'update':
+        $dynamicsConnector->update($data);
+        break;
+    }
+
   }
 
 }

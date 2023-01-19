@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\cycling_uk_dynamics\Event;
+namespace Drupal\cycling_uk_application_process\Event;
 
 use Drupal\Component\EventDispatcher\Event;
 use Drupal\cycling_uk_application_process\CyclingUkApplicationProcessInterface;

@@ -54,6 +54,18 @@ interface CyclingUkApplicationProcessInterface extends ContentEntityInterface, E
   /**
    * @return string
    */
+  public function getDynamicsEntityType() : string;
+
+  /**
+   * @param string $dynamicsEntityType
+   *
+   * @return \Drupal\cycling_uk_application_process\CyclingUkApplicationProcessInterface
+   */
+  public function setDynamicsEntityType(string $dynamicsEntityType): CyclingUkApplicationProcessInterface;
+
+  /**
+   * @return string
+   */
   public function getApplicationStatus() : string;
 
   /**

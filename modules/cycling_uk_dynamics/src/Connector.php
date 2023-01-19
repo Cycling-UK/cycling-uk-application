@@ -388,7 +388,7 @@ class Connector {
   }
 
   /**
-   * Create a Dynamics node from a queue submission.
+   * Create a Dynamics record from a queue submission.
    *
    * @param array $queueItem
    *   An queue item.
@@ -405,10 +405,7 @@ class Connector {
     foreach ($queueItem['data'] as $row) {
       $entity[$row['destination_field']] = $row['destination_value'];
     }
-
     $dynamicsId = $this->client->Create($entity);
-//    $dynamicsId = 'test';
-
     $preQueueEvent = new DynamicsEntityCreatedEvent(
       $queueItem['destination_entity'],
       $dynamicsId,
@@ -418,6 +415,24 @@ class Connector {
     $event_dispatcher = \Drupal::service('event_dispatcher');
     $event_dispatcher->dispatch($preQueueEvent, DynamicsEntityCreatedEvent::EVENT_NAME);
 
+  }
+
+  /**
+   *  Update a Dynamics record from a queue submission.
+   *
+   * @param array $queueItem
+   *
+   * @return void
+   * @throws \AlexaCRM\WebAPI\OData\AuthenticationException
+   * @throws \AlexaCRM\WebAPI\OrganizationException
+   * @throws \AlexaCRM\WebAPI\ToolkitException
+   */
+  public function update(array $queueItem) {
+    $record = new \AlexaCRM\Xrm\Entity($queueItem['destination_entity'], $queueItem['destination_id']);
+    foreach ($queueItem['data'] as $row) {
+      $record[$row['destination_field']] = $row['destination_value'];
+    }
+    $this->client->Update($record);
   }
 
 }

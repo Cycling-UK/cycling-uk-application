@@ -7,3 +7,8 @@ services:
     class: Drupal\cycling_uk_dynamics\Plugin\ProcessPluginManager
     parent: default_plugin_manager
     arguments: ['@container.namespaces', '@cache.discovery', '@module_handler']
+
+  queue.dynamics:
+    class: Drupal\Core\Queue\QueueInterface
+    factory: ['@queue', 'get']
+    arguments: [dynamics_queue]

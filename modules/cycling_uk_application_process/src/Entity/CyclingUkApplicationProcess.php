@@ -9,7 +9,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\cycling_uk_application_process\CyclingUkApplicationProcessInterface;
 use Drupal\cycling_uk_application_type\Entity\CyclingUkApplicationType;
-use Drupal\cycling_uk_dynamics\Event\ApplicationStatusChanged;
+use Drupal\cycling_uk_application_process\Event\ApplicationStatusChanged;
 use Drupal\cycling_uk_dynamics\Event\DynamicsEntityCreatedEvent;
 use Drupal\user\EntityOwnerTrait;
 use Drupal\webform\WebformInterface;
@@ -149,6 +149,22 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
   /**
    * {@inheritdoc}
    */
+  public function setDynamicsEntityType(string $dynamicsEntityType
+  ): CyclingUkApplicationProcessInterface {
+    $this->set('dynamics_entity_type', $dynamicsEntityType);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDynamicsEntityType(): string {
+    return $this->get('dynamics_entity_type')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function setApplicationStatus(string $applicationStatus
   ): CyclingUkApplicationProcessInterface {
     $this->set('application_status', $applicationStatus);
@@ -231,6 +247,22 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
 
     $fields['dynamics_entity_id'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Dynamics entity ID'))
+      ->setRequired(TRUE)
+      ->setSetting('max_length', 255)
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+        'weight' => 2,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'hidden',
+        'type' => 'string',
+        'weight' => 3,
+      ])
+      ->setDisplayConfigurable('form', FALSE);
+
+    $fields['dynamics_entity_type'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Dynamics entity type'))
       ->setRequired(TRUE)
       ->setSetting('max_length', 255)
       ->setDisplayOptions('form', [
