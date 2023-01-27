@@ -1,0 +1,36 @@
+uuid: d524abe4-8d34-42d1-af69-69fa95358aac
+langcode: en
+status: true
+dependencies:
+  config:
+    - comment.type.application
+    - field.field.comment.application.field_attachments
+  module:
+    - file
+id: comment.application.default
+targetEntityType: comment
+bundle: application
+mode: default
+content:
+  author:
+    weight: -2
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  comment_body:
+    type: text_textarea
+    weight: 1
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  field_attachments:
+    type: file_generic
+    weight: 11
+    region: content
+    settings:
+      progress_indicator: throbber
+    third_party_settings: {  }
+hidden:
+  subject: true

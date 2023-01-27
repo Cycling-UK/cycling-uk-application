@@ -58,7 +58,7 @@ final class DynamicsWebformHandler extends WebformHandlerBase {
 
     $webform = $webformSubmission->getWebform();
     $data = $webformSubmission->getData();
-    $mappings = $webform->getThirdPartySettings('dynamics');
+    $mappings = $webform->getThirdPartySettings('cycling_uk_dynamics');
 
     $queueSubmissions = [];
 

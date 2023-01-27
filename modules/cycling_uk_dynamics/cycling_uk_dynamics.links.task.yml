@@ -1,0 +1,9 @@
+cycling_uk_dyanmics.settings:
+  title: 'Settings'
+  route_name: cycling_uk_dynamics.settings_form
+  base_route: cycling_uk_dynamics.settings_form
+
+cycling_uk_dyanmics.actions:
+  title: 'Actions'
+  route_name: cycling_uk_dynamics.actions_form
+  base_route: cycling_uk_dynamics.settings_form

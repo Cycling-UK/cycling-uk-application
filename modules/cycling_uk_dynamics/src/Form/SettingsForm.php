@@ -60,31 +60,6 @@ class SettingsForm extends ConfigFormBase {
       '#default_value' => implode(PHP_EOL, $this->config('dynamics.settings')->get('entity_whitelist') ?? []),
     ];
 
-    // Settings for auto qualification of applicant.
-    $form['automatic_qualification'] = array(
-      '#type' => 'details',
-      '#title' => $this->t('Automatic Qualification'),
-      '#open' => TRUE,
-    );
-    $form['automatic_qualification']['auto_qualified_success_threshold'] = array(
-      '#type' => 'textfield',
-      '#title' => $this->t('Success Threshold'),
-      '#description' => $this->t('Once an applicant meets this percentage of the below "Webform Questions", they will automatically be qualified.'),
-      '#default_value' => $this->config('dynamics.settings')->get('auto_qualified_success_threshold'),
-    );
-    $form['automatic_qualification']['auto_qualified_questions'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('Webform Questions'),
-      '#description' => $this->t('Radio button questions, from the "CFP accreditation application" webform.'),
-      '#default_value' => implode(PHP_EOL, $this->config('dynamics.settings')->get('auto_qualified_questions') ?? []),
-      '#rows' => 10,
-    ];
-    $form['automatic_qualification']['auto_qualified_enable'] = array(
-      '#type' => 'checkbox',
-      '#title' => $this->t('Enable'),
-      '#default_value' => $this->config('dynamics.settings')->get('auto_qualified_enable'),
-    );
-
     return parent::buildForm($form, $form_state);
   }
 
@@ -109,23 +84,6 @@ class SettingsForm extends ConfigFormBase {
       $form_state->setErrorByName('endpoint', $this->t('Endpoint must be a valid URI.'));
     }
 
-    // Enable the process of not.
-    $auto_qualified_enable = (bool) $form_state->getValue('auto_qualified_enable');
-
-    if ($auto_qualified_enable) {
-      $success_threshold = (int) $form_state->getValue('auto_qualified_success_threshold');
-      $total_questions = count(explode(PHP_EOL, $form_state->getValue('auto_qualified_questions')));
-
-      // Validate that at least one question has been defined.
-      if ($total_questions < 1) {
-        $form_state->setErrorByName('auto_qualified_questions', $this->t('There must be at least 1 Webform Questions defined.'));
-      }
-      // Validate success_threshold.
-      if ($success_threshold > 100 || $success_threshold < 1) {
-        $form_state->setErrorByName('auto_qualified_success_threshold', $this->t('The success threshold must be a number between 1 and 100.'));
-      }
-    }
-
     parent::validateForm($form, $form_state);
   }
 
@@ -140,14 +98,6 @@ class SettingsForm extends ConfigFormBase {
       ->set('application_secret', $form_state->getValue('application_secret'))
       ->set('endpoint', $form_state->getValue('endpoint'))
       ->set('entity_whitelist', preg_split("/\r\n|\n|\r/", $form_state->getValue('entity_whitelist'), -1, \PREG_SPLIT_NO_EMPTY));
-
-    $config->set('auto_qualified_enable', $form_state->getValue('auto_qualified_enable'));
-
-    if ($form_state->getValue('auto_qualified_enable')) {
-      $config->set('auto_qualified_success_threshold', $form_state->getValue('auto_qualified_success_threshold'));
-      $config->set('auto_qualified_questions', preg_split("/\r\n|\n|\r/", $form_state->getValue('auto_qualified_questions'), -1, \PREG_SPLIT_NO_EMPTY));
-    }
-
     $config->save();
 
     parent::submitForm($form, $form_state);

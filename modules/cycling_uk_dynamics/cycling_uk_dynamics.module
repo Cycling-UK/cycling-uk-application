@@ -34,23 +34,23 @@ function cycling_uk_dynamics_webform_third_party_settings_form_alter(
   }
 
   // This contains the saved version of the Dynamics settings for this form.
-  $third_party_settings = $webform->getThirdPartySettings('dynamics');
+  $third_party_settings = $webform->getThirdPartySettings('cycling_uk_dynamics');
 
   // Count priority: form state, third party settings, default to 1.
   $count = $form_state->get([
     'third_party_settings',
-    'dynamics',
+    'cycling_uk_dynamics',
     'count',
   ])
     ?? $third_party_settings['count']
     ?? 1;
 
-  $form_state->set(['third_party_settings', 'dynamics', 'count'], $count);
+  $form_state->set(['third_party_settings', 'cycling_uk_dynamics', 'count'], $count);
 
   // @todo unset any source or destination elements where (index > $count).
   // @todo In corner cases new elements appear to be "pre-set" with old data.
   // All the Dynamics elements are children of this details block.
-  $form['third_party_settings']['dynamics'] = [
+  $form['third_party_settings']['cycling_uk_dynamics'] = [
     '#type' => 'details',
     '#title' => t('Dynamics settings'),
     '#open' => TRUE,
@@ -61,7 +61,7 @@ function cycling_uk_dynamics_webform_third_party_settings_form_alter(
   // Turns out keeping a separate count actually made the code easier than
   // counting the elements directly. Count gets saved along with the rest
   // of the third party settings, ready to rebuild the form when needed.
-  $form['third_party_settings']['dynamics']['count'] = [
+  $form['third_party_settings']['cycling_uk_dynamics']['count'] = [
     '#type' => 'hidden',
     '#value' => $count,
   ];
@@ -70,13 +70,13 @@ function cycling_uk_dynamics_webform_third_party_settings_form_alter(
   $source_options = _dynamics_source_options($webform);
 
   for ($i = 0; $i < $count; $i++) {
-    $form['third_party_settings']['dynamics'][$i] = [
+    $form['third_party_settings']['cycling_uk_dynamics'][$i] = [
       '#type' => 'details',
       '#title' => t('Map field to Dynamics'),
       '#open' => TRUE,
     ];
 
-    $form['third_party_settings']['dynamics'][$i]['source'] = [
+    $form['third_party_settings']['cycling_uk_dynamics'][$i]['source'] = [
       '#type' => 'select',
       '#title' => t('Source'),
       '#options' => $source_options,
@@ -93,7 +93,7 @@ function cycling_uk_dynamics_webform_third_party_settings_form_alter(
     // Source priority: form state, third party settings, default to empty.
     $source = $form_state->getValue([
       'third_party_settings',
-      'dynamics',
+      'cycling_uk_dynamics',
       $i,
       'source',
     ])
@@ -105,14 +105,14 @@ function cycling_uk_dynamics_webform_third_party_settings_form_alter(
     // Source priority: form state, third party settings, default to empty.
     $destination = $form_state->getValue([
       'third_party_settings',
-      'dynamics',
+      'cycling_uk_dynamics',
       $i,
       'destination',
     ])
       ?? $third_party_settings[$i]['destination']
       ?? NULL;
 
-    $form['third_party_settings']['dynamics'][$i]['destination'] = [
+    $form['third_party_settings']['cycling_uk_dynamics'][$i]['destination'] = [
       '#type' => 'select',
       '#title' => t('Destination'),
       '#options' => _dynamics_destination_options($source_type),
@@ -122,11 +122,11 @@ function cycling_uk_dynamics_webform_third_party_settings_form_alter(
     ];
   }
 
-  $form['third_party_settings']['dynamics']['actions'] = [
+  $form['third_party_settings']['cycling_uk_dynamics']['actions'] = [
     '#type' => 'actions',
   ];
 
-  $form['third_party_settings']['dynamics']['actions']['add_map'] = [
+  $form['third_party_settings']['cycling_uk_dynamics']['actions']['add_map'] = [
     '#type' => 'submit',
     '#value' => t('Add mapping'),
     '#submit' => ['dynamics_add_one_callback'],
@@ -138,7 +138,7 @@ function cycling_uk_dynamics_webform_third_party_settings_form_alter(
     ],
   ];
 
-  $form['third_party_settings']['dynamics']['actions']['remove_map'] = [
+  $form['third_party_settings']['cycling_uk_dynamics']['actions']['remove_map'] = [
     '#type' => 'submit',
     '#value' => t('Remove mapping'),
     '#submit' => ['dynamics_remove_one_callback'],
@@ -151,7 +151,7 @@ function cycling_uk_dynamics_webform_third_party_settings_form_alter(
   ];
 
   if ($count == 1) {
-    $form['third_party_settings']['dynamics']['actions']['remove_map']['#disabled'] = TRUE;
+    $form['third_party_settings']['cycling_uk_dynamics']['actions']['remove_map']['#disabled'] = TRUE;
   }
 }
 
@@ -424,9 +424,9 @@ function dynamics_change_callback(
   // to be changed.
   $i = $triggering_element['#array_parents'][2];
 
-  $form['third_party_settings']['dynamics'][$i]['destination']['#options'] = _dynamics_destination_options($source_type);
+  $form['third_party_settings']['cycling_uk_dynamics'][$i]['destination']['#options'] = _dynamics_destination_options($source_type);
 
-  return $form['third_party_settings']['dynamics'][$i]['destination'];
+  return $form['third_party_settings']['cycling_uk_dynamics'][$i]['destination'];
 }
 
 /**
@@ -445,13 +445,13 @@ function dynamics_add_one_callback(
 ) {
   $count = $form_state->get([
       'third_party_settings',
-      'dynamics',
+      'cycling_uk_dynamics',
       'count',
     ]) + 1;
 
   $form_state->set([
     'third_party_settings',
-    'dynamics',
+    'cycling_uk_dynamics',
     'count',
   ], $count);
 
@@ -471,7 +471,7 @@ function dynamics_add_one_callback(
 function dynamics_remove_one_callback(array &$form, FormStateInterface $form_state) {
   $count = $form_state->get([
       'third_party_settings',
-      'dynamics',
+      'cycling_uk_dynamics',
       'count',
     ]) - 1;
 
@@ -481,7 +481,7 @@ function dynamics_remove_one_callback(array &$form, FormStateInterface $form_sta
 
   $form_state->set([
     'third_party_settings',
-    'dynamics',
+    'cycling_uk_dynamics',
     'count',
   ], $count);
 
@@ -505,7 +505,7 @@ function dynamics_remove_one_callback(array &$form, FormStateInterface $form_sta
  *   dynamics block.
  */
 function dynamics_rebuild_callback(array &$form, FormStateInterface $form_state): array {
-  return $form['third_party_settings']['dynamics'];
+  return $form['third_party_settings']['cycling_uk_dynamics'];
 }
 
 /**

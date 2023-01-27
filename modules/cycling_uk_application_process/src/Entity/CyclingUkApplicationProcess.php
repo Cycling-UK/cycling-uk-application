@@ -181,6 +181,13 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
   /**
    * {@inheritdoc}
    */
+  public function isQualified() : bool {
+    return $this->getApplicationStatus() === 'qualified';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
 
     $fields = parent::baseFieldDefinitions($entity_type);

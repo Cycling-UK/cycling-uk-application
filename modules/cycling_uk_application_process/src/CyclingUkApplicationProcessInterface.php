@@ -69,6 +69,11 @@ interface CyclingUkApplicationProcessInterface extends ContentEntityInterface, E
   public function getApplicationStatus() : string;
 
   /**
+   * @return bool
+   */
+  public function isQualified() : bool;
+
+  /**
    * @param string $applicationStatus
    *
    * @return \Drupal\cycling_uk_application_process\CyclingUkApplicationProcessInterface
