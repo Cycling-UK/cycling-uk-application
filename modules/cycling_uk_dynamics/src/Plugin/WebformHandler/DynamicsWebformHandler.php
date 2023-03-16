@@ -2,8 +2,11 @@
 
 namespace Drupal\cycling_uk_dynamics\Plugin\WebformHandler;
 
+use Drupal\Core\Url;
 use Drupal\cycling_uk_dynamics\Event\PreDynamicsItemQueueEvent;
 use Drupal\cycling_uk_dynamics\Plugin\ProcessPluginInterface;
+use Drupal\webform\Entity\Webform;
+use Drupal\webform\Entity\WebformSubmission;
 use Drupal\webform\Plugin\WebformHandlerBase;
 use Drupal\webform\WebformSubmissionInterface;
 use http\Exception\RuntimeException;
@@ -71,7 +74,7 @@ final class DynamicsWebformHandler extends WebformHandlerBase {
 
       $processPlugin = $this->getProcessPlugin($mapping['source'], $destinationEntity, $destinationField);
 
-      $element = $this->getSourceData($mapping['source'], $data);
+      $element = $this->getSourceData($mapping['source'], $data, $webform, $webformSubmission);
       $processPlugin->setSource($element);
 
       $queueSubmissions[$destinationEntity][] = [
@@ -161,6 +164,9 @@ final class DynamicsWebformHandler extends WebformHandlerBase {
    *   Type of $sourceName.
    */
   private function getSourceType(string $sourceName): string {
+    if (strpos($sourceName, 'webform') === 0) {
+      return 'textfield';
+    }
     $webform = $this->getWebform();
     $elements = $webform->getElementsInitializedAndFlattened();
     $keys = explode(':', $sourceName);
@@ -188,11 +194,17 @@ final class DynamicsWebformHandler extends WebformHandlerBase {
    *   Name of a field.
    * @param array $data
    *   Array of user-submitted webform data.
-   *
+   * @param Webform $webform
+   *   The Webform to generate the property data from.
+   * @param WebformSubmission $webformSubmission
+   *   The Webform Submission to generate the property data from.
    * @return mixed
    *   Data user submitted.
    */
-  private function getSourceData(string $sourceName, array $data) {
+  private function getSourceData(string $sourceName, array $data, Webform $webform, WebformSubmission $webformSubmission) {
+    if (strpos($sourceName, 'webform') === 0) {
+      return self::getWebformSourceData($sourceName, $webform, $webformSubmission);
+    }
     $keys = explode(':', $sourceName);
     return self::getSourceDataWorker($keys, $data);
   }
@@ -209,6 +221,30 @@ final class DynamicsWebformHandler extends WebformHandlerBase {
       return NULL;
     }
     return self::getSourceDataWorker($keys, $data[$key]);
+  }
+
+  /**
+   * Get source data for 'static' webform properties.
+   *
+   * @param string $name
+   *   The name of the propery.
+   * @param Webform $webform
+   *   The Webform to generate the property data from.
+   * @param WebformSubmission $webformSubmission
+   *   The Webform Submission to generate the property data from.
+   * @return void
+   */
+  private static function getWebformSourceData(string $name, Webform $webform, WebformSubmission $webformSubmission) {
+
+  $url = $webformSubmission->toUrl();
+    $url->setOptions(['absolute' => TRUE, 'https' => TRUE]);
+
+    $data = [
+      'webform_submission_url' => $url->toString(),
+      'webform_submission_guid' => $webformSubmission->uuid(),
+      'webform_name' => $webform->label(),
+    ];
+    return $data[$name] ?? NULL;
   }
 
 }
