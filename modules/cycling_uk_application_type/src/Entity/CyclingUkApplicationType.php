@@ -369,7 +369,28 @@ class CyclingUkApplicationType extends ContentEntityBase implements CyclingUkApp
       ])
       ->setDisplayConfigurable('view', TRUE);
 
-
+    $fields['application_submission'] = BaseFieldDefinition::create('list_string')
+      ->setLabel(t('Application Setting'))
+      ->setSettings([
+        'allowed_values' => [
+          'immediate' => 'Create web application and send immediately to Dynamics',
+          'on_qualified' => 'Create web application and send on qualified to Dynamics',
+        ],
+      ])
+      ->setCardinality(1)
+      ->setDefaultValue('on_qualified')
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'list_default',
+        'weight' => -4,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'options_select',
+        'weight' => 4,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE)
+      ->setRequired(TRUE);
 
     $fields['uid'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Author'))
