@@ -267,6 +267,9 @@ function _dynamics_source_options(WebformInterface $webform): array {
 
   return array_merge(
     ['none' => t('None')],
+    ['webform_submission_url' => 'Webform Submission Link'],
+    ['webform_submission_guid' => 'Webform Submission GUID'],
+    ['webform_name' => 'Webform Name'],
     $result
   );
 }
@@ -360,7 +363,13 @@ function _dynamics_source_options_tree(array $elements, string $parent = '') {
  * @return mixed
  *   Name of type, or NULL.
  */
-function _dynamics_get_type(WebformInterface $webform, $name) {
+
+
+function _dynamics_get_type(WebformInterface $webform, $name)
+{
+  if (strpos($name, 'webform') === 0) {
+    return 'textfield';
+  }
   $elements = $webform->getElementsInitializedAndFlattened();
   $keys = explode(':', $name);
 
