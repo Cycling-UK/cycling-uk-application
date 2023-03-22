@@ -12,15 +12,15 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelFactory;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\cycling_uk_dynamics\Event\DynamicsEntityCreatedEvent;
-use Drupal\cycling_uk_dynamics\Event\PreDynamicsItemQueueEvent;
-use Drupal\node\Entity\Node;
-use Drupal\webform\Entity\Webform;
-use Drupal\webform\Entity\WebformSubmission;
 
 /**
  * Connector service handles communication between us and Dynamics.
  */
 class Connector {
+
+  public const UPDATE = 'update';
+
+  public const CREATE = 'create';
 
   const CACHE_TAG = 'dynamics_query';
 
@@ -400,17 +400,16 @@ class Connector {
    */
   public function create(array $queueItem): void {
     $entity = new Entity($queueItem['destination_entity']);
-    $webformSubmission = WebformSubmission::load($queueItem['webform_submission_id']);
 
     foreach ($queueItem['data'] as $row) {
       $entity[$row['destination_field']] = $row['destination_value'];
     }
     $dynamicsId = $this->client->Create($entity);
     $preQueueEvent = new DynamicsEntityCreatedEvent(
+      $queueItem['drupal_entity_type'],
+      $queueItem['drupal_entity_id'],
       $queueItem['destination_entity'],
       $dynamicsId,
-      $webformSubmission,
-      $queueItem
     );
     $event_dispatcher = \Drupal::service('event_dispatcher');
     $event_dispatcher->dispatch($preQueueEvent, DynamicsEntityCreatedEvent::EVENT_NAME);
@@ -418,17 +417,18 @@ class Connector {
   }
 
   /**
-   *  Update a Dynamics record from a queue submission.
+   * Update a Dynamics record from a queue submission.
    *
    * @param array $queueItem
    *
    * @return void
+   *
    * @throws \AlexaCRM\WebAPI\OData\AuthenticationException
    * @throws \AlexaCRM\WebAPI\OrganizationException
    * @throws \AlexaCRM\WebAPI\ToolkitException
    */
   public function update(array $queueItem) {
-    $record = new \AlexaCRM\Xrm\Entity($queueItem['destination_entity'], $queueItem['destination_id']);
+    $record = new Entity($queueItem['destination_entity'], $queueItem['destination_id']);
     foreach ($queueItem['data'] as $row) {
       $record[$row['destination_field']] = $row['destination_value'];
     }

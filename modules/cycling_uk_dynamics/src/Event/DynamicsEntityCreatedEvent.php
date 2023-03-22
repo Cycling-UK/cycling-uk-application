@@ -3,8 +3,6 @@
 namespace Drupal\cycling_uk_dynamics\Event;
 
 use Drupal\Component\EventDispatcher\Event;
-use Drupal\webform\WebformInterface;
-use Drupal\webform\WebformSubmissionInterface;
 
 /**
  * Event that is fired after a dynamics API create request is successful.
@@ -13,32 +11,76 @@ class DynamicsEntityCreatedEvent extends Event {
 
   const EVENT_NAME = 'dynamics_entity_created_event';
 
-  public string $dynamicsEntityType;
+  /**
+   * Undocumented variable.
+   *
+   * @var string
+   */
 
-  public array $queueItem;
-
-  public string $dynamicsId;
-
-  public WebformSubmissionInterface $webformSubmission;
+  protected string $drupalEntityType;
 
   /**
-   * Construct the dyanmics entity created event.
+   * Undocumented variable.
    *
-   * @param string $dynamicsEntityType
-   * @param int $dynamicsId
-   * @param \Drupal\webform\$webformSubmission $webformSubmission
-   * @param array $queueItem
+   * @var int
+   */
+  protected int $drupalEntityId;
+
+  /**
+   * Undocumented variable.
+   *
+   * @var string
+   */
+  protected string $dynamicsEntityType;
+
+  /**
+   * Undocumented variable.
+   *
+   * @var string
+   */
+  protected string $dynamicsId;
+
+  /**
+   * Construct the dynamics entity created event.
    */
   public function __construct(
+    string $drupalEntityType,
+    int $drupalEntityId,
     string $dynamicsEntityType,
-    string $dynamicsId,
-    WebformSubmissionInterface $webformSubmission,
-    array $queueItem
+    string $dynamicsId
   ) {
     $this->dynamicsId = $dynamicsId;
-    $this->queueItem = $queueItem;
     $this->dynamicsEntityType = $dynamicsEntityType;
-    $this->webformSubmission = $webformSubmission;
+    $this->drupalEntityId = $drupalEntityId;
+    $this->drupalEntityType = $drupalEntityType;
+  }
+
+  /**
+   * Get the Drupal entity ID.
+   */
+  public function getDrupalEntityId() : int {
+    return $this->drupalEntityId;
+  }
+
+  /**
+   * Get the Drupal entity type.
+   */
+  public function getDrupalEntityType() : string {
+    return $this->drupalEntityType;
+  }
+
+  /**
+   * Get the Dynamics ID.
+   */
+  public function getDynamicsId() : string {
+    return $this->dynamicsId;
+  }
+
+  /**
+   * Get the Dynamics entity type.
+   */
+  public function getDynamicsEntityType() : string {
+    return $this->dynamicsEntityType;
   }
 
 }

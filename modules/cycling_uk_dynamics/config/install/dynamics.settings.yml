@@ -3,3 +3,4 @@ application_id: ae6a4d62-f0bf-42c6-bf26-e7265a4678f0
 endpoint: 'https://cyclingukdev.api.crm11.dynamics.com/api/data/v9.2/'
 entity_whitelist:
   - cuk_application
+  - cuk_cyclingukloans

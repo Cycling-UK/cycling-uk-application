@@ -10,9 +10,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\cycling_uk_application_process\CyclingUkApplicationProcessInterface;
 use Drupal\cycling_uk_application_type\Entity\CyclingUkApplicationType;
 use Drupal\cycling_uk_application_process\Event\ApplicationStatusChanged;
-use Drupal\cycling_uk_dynamics\Event\DynamicsEntityCreatedEvent;
 use Drupal\user\EntityOwnerTrait;
-use Drupal\webform\WebformInterface;
 use Drupal\webform\WebformSubmissionInterface;
 
 /**
@@ -84,10 +82,10 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
     }
 
     if (!$this->isNew()) {
-      /** @var CyclingUkApplicationProcessInterface $original */
+      /** @var \Drupal\cycling_uk_application_process\CyclingUkApplicationProcessInterface $original */
       $original = $this->original;
       $oldStatus = $original->getApplicationStatus();
-      $newStatus =  $this->getApplicationStatus();
+      $newStatus = $this->getApplicationStatus();
       if ($oldStatus !== $newStatus) {
         $stageChangedEvent = new ApplicationStatusChanged($this);
         $event_dispatcher = \Drupal::service('event_dispatcher');
@@ -103,6 +101,9 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
     return $this->get('webform_submission')->entity;
   }
 
+  /**
+   *
+   */
   protected function hasWebformSubmission() : bool {
     return !$this->get('webform_submission')->isEmpty();
   }
@@ -133,8 +134,7 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
   /**
    * {@inheritdoc}
    */
-  public function setDynamicsId(string $dyanmicsId
-  ): CyclingUkApplicationProcessInterface {
+  public function setDynamicsId(string $dyanmicsId): CyclingUkApplicationProcessInterface {
     $this->set('dynamics_entity_id', $dyanmicsId);
     return $this;
   }
@@ -142,15 +142,21 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
   /**
    * {@inheritdoc}
    */
-  public function getDynamicsId(): string {
+  public function getDynamicsId(): ?string {
     return $this->get('dynamics_entity_id')->value;
+  }
+
+  /**
+   *
+   */
+  public function hasDynamicsId() : bool {
+    return !empty($this->get('dynamics_entity_id')->value);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function setDynamicsEntityType(string $dynamicsEntityType
-  ): CyclingUkApplicationProcessInterface {
+  public function setDynamicsEntityType(string $dynamicsEntityType): CyclingUkApplicationProcessInterface {
     $this->set('dynamics_entity_type', $dynamicsEntityType);
     return $this;
   }
@@ -165,8 +171,7 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
   /**
    * {@inheritdoc}
    */
-  public function setApplicationStatus(string $applicationStatus
-  ): CyclingUkApplicationProcessInterface {
+  public function setApplicationStatus(string $applicationStatus): CyclingUkApplicationProcessInterface {
     $this->set('application_status', $applicationStatus);
     return $this;
   }
@@ -254,7 +259,7 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
 
     $fields['dynamics_entity_id'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Dynamics entity ID'))
-      ->setRequired(TRUE)
+      ->setRequired(FALSE)
       ->setSetting('max_length', 255)
       ->setDisplayOptions('form', [
         'type' => 'string_textfield',
@@ -361,7 +366,5 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
 
     return $fields;
   }
-
-
 
 }

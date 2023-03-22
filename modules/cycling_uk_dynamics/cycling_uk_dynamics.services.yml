@@ -12,3 +12,11 @@ services:
     class: Drupal\Core\Queue\QueueInterface
     factory: ['@queue', 'get']
     arguments: [dynamics_queue]
+
+  cycling_uk_dynamics.queue_loader:
+    class: Drupal\cycling_uk_dynamics\CyclingUkDynamicsQueueLoader
+    arguments: ['@queue.dynamics']
+
+  cycling_uk_dynamics.queue_data:
+    class: Drupal\cycling_uk_dynamics\CyclingUkDynamicsQueueData
+    arguments: ['@event_dispatcher']
