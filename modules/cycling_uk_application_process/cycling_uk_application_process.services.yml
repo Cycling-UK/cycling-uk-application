@@ -1,6 +1,6 @@
 services:
   cycling_uk_application_process.event_subscriber:
     class: Drupal\cycling_uk_application_process\EventSubscriber\CyclingUkApplicationProcessSubscriber
-    arguments: ['@entity_type.manager', '@queue.dynamics']
+    arguments: ['@entity_type.manager', '@cycling_uk_dynamics.queue_data','@cycling_uk_dynamics.queue_loader']
     tags:
       - { name: event_subscriber }

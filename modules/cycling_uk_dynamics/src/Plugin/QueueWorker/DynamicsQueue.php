@@ -3,6 +3,7 @@
 namespace Drupal\cycling_uk_dynamics\Plugin\QueueWorker;
 
 use Drupal\Core\Queue\QueueWorkerBase;
+use Drupal\cycling_uk_dynamics\Connector;
 
 /**
  * Processes Tasks for Learning.
@@ -25,10 +26,11 @@ class DynamicsQueue extends QueueWorkerBase {
     $dynamicsConnector = \Drupal::service('cycling_uk_dynamics.connector');
 
     switch ($data['action']) {
-      case 'create':
+      case Connector::CREATE:
         $dynamicsConnector->create($data);
         break;
-      case 'update':
+
+      case Connector::UPDATE:
         $dynamicsConnector->update($data);
         break;
     }

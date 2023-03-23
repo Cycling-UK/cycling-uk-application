@@ -52,6 +52,10 @@ class CyclingUkApplicationType extends ContentEntityBase implements CyclingUkApp
 
   use EntityChangedTrait;
 
+  public const SUBMISSION_MODE_IMMEDIATE = 'immediate';
+
+  public const SUBMISSION_MODE_ON_QUALIFICATION = 'on_qualified';
+
   /**
    * {@inheritdoc}
    *
@@ -84,7 +88,6 @@ class CyclingUkApplicationType extends ContentEntityBase implements CyclingUkApp
   public function getTitleFormat() {
     return $this->get('title_format')->value;
   }
-
 
   /**
    * {@inheritdoc}
@@ -164,6 +167,13 @@ class CyclingUkApplicationType extends ContentEntityBase implements CyclingUkApp
   /**
    * {@inheritdoc}
    */
+  public function getSubmissionMode() : string {
+    return $this->get('application_submission')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
 
     $fields = parent::baseFieldDefinitions($entity_type);
@@ -227,10 +237,10 @@ class CyclingUkApplicationType extends ContentEntityBase implements CyclingUkApp
           'image_style' => 'thumbnail',
         ],
       ])
-      ->setDisplayOptions('form', array(
+      ->setDisplayOptions('form', [
         'type' => 'image',
         'weight' => -4,
-      ))
+      ])
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
 
@@ -238,15 +248,15 @@ class CyclingUkApplicationType extends ContentEntityBase implements CyclingUkApp
       ->setLabel(t('Documents'))
       ->setCardinality(-1)
       ->setSetting('file_extensions', 'pdf')
-      ->setDisplayOptions('view', array(
+      ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'file',
         'weight' => -3,
-      ))
-      ->setDisplayOptions('form', array(
+      ])
+      ->setDisplayOptions('form', [
         'type' => 'file',
         'weight' => -3,
-      ))
+      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
@@ -373,8 +383,8 @@ class CyclingUkApplicationType extends ContentEntityBase implements CyclingUkApp
       ->setLabel(t('Application Setting'))
       ->setSettings([
         'allowed_values' => [
-          'immediate' => 'Create web application and send immediately to Dynamics',
-          'on_qualified' => 'Create web application and send on qualified to Dynamics',
+          self::SUBMISSION_MODE_IMMEDIATE => 'Create web application and send immediately to Dynamics',
+          self::SUBMISSION_MODE_ON_QUALIFICATION => 'Create web application and send on qualified to Dynamics',
         ],
       ])
       ->setCardinality(1)
