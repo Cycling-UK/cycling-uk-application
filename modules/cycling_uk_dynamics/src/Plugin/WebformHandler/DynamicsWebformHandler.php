@@ -2,14 +2,11 @@
 
 namespace Drupal\cycling_uk_dynamics\Plugin\WebformHandler;
 
-use Drupal\Core\Url;
-use Drupal\cycling_uk_dynamics\Event\PreDynamicsItemQueueEvent;
-use Drupal\cycling_uk_dynamics\Plugin\ProcessPluginInterface;
-use Drupal\webform\Entity\Webform;
-use Drupal\webform\Entity\WebformSubmission;
+use Drupal\Component\EventDispatcher\ContainerAwareEventDispatcher;
+use Drupal\cycling_uk_dynamics\CyclingUkDynamicsQueueData;
+use Drupal\cycling_uk_dynamics\Event\PreDynamicsWebformPush;
 use Drupal\webform\Plugin\WebformHandlerBase;
 use Drupal\webform\WebformSubmissionInterface;
-use http\Exception\RuntimeException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -29,23 +26,34 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 final class DynamicsWebformHandler extends WebformHandlerBase {
 
   /**
-   * The queue.
+   * The queue loader.
    *
-   * @var \Drupal\Core\Queue\QueueInterface
+   * @var \Drupal\cycling_uk_dynamics\CyclingUkDynamicsQueueLoader
    */
-  protected $dynamicsQueue;
+  protected $queueLoader;
+
+  /**
+   * The queue data creator.
+   *
+   * @var \Drupal\cycling_uk_dynamics\CyclingUkDynamicsQueueData
+   */
+  protected CyclingUkDynamicsQueueData $queueData;
+
+  /**
+   * The event dispatcher.
+   *
+   * @var \Drupal\Component\EventDispatcher\ContainerAwareEventDispatcher
+   */
+  protected ContainerAwareEventDispatcher $eventDispatcher;
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
-
-    /** @var \Drupal\Core\Queue\QueueFactory $queue_factory */
-    $queueFactory = $container->get('queue');
-
-    $instance->dynamicsQueue = $queueFactory->get('dynamics_queue');
-
+    $instance->queueLoader = $container->get('cycling_uk_dynamics.queue_loader');
+    $instance->queueData = $container->get('cycling_uk_dynamics.queue_data');
+    $instance->eventDispatcher = $container->get('event_dispatcher');
     return $instance;
   }
 
@@ -58,193 +66,12 @@ final class DynamicsWebformHandler extends WebformHandlerBase {
     if ($webformSubmission->getState() != WebformSubmissionInterface::STATE_COMPLETED) {
       return;
     }
-
-    $webform = $webformSubmission->getWebform();
-    $data = $webformSubmission->getData();
-    $mappings = $webform->getThirdPartySettings('cycling_uk_dynamics');
-
-    $queueSubmissions = [];
-
-    foreach ($mappings as $mapping) {
-      if (empty($mapping['source']) || empty($mapping['destination']) || $mapping['source'] == 'none' || $mapping['destination'] == 'none') {
-        continue;
-      }
-
-      [$destinationEntity, $destinationField] = explode(':', $mapping['destination']);
-
-      $processPlugin = $this->getProcessPlugin($mapping['source'], $destinationEntity, $destinationField);
-
-      $element = $this->getSourceData($mapping['source'], $data, $webform, $webformSubmission);
-      $processPlugin->setSource($element);
-
-      $queueSubmissions[$destinationEntity][] = [
-        'destination_field' => $destinationField,
-        'destination_value' => $processPlugin->getDestination(),
-      ];
+    $queueData = $this->queueData->getQueueData($webformSubmission);
+    $preWebformPushEvent = new PreDynamicsWebformPush($webformSubmission);
+    $this->eventDispatcher->dispatch($preWebformPushEvent, PreDynamicsWebformPush::EVENT_NAME);
+    if ($preWebformPushEvent->getshouldPush()) {
+      $this->queueLoader->load($queueData);
     }
-
-    foreach ($queueSubmissions as $destinationEntity => $data) {
-      $item = [
-        'webform_submission_id' => $webformSubmission->id(),
-        'destination_entity' => $destinationEntity,
-        'action' => 'create',
-        'data' => $data,
-      ];
-      $preQueueEvent = new PreDynamicsItemQueueEvent($webform, $item);
-      $event_dispatcher = \Drupal::service('event_dispatcher');
-      $event_dispatcher->dispatch($preQueueEvent, PreDynamicsItemQueueEvent::EVENT_NAME);
-      $this->dynamicsQueue->createItem($preQueueEvent->queueItem);
-    }
-  }
-
-  /**
-   * Returns a process plugin that can map data from source to destination.
-   *
-   * @param string $source
-   *   Name of source webform field.
-   * @param string $destinationEntity
-   *   Name of destination Dynamics entity.
-   * @param string $destinationField
-   *   Name of destination Dynamics field.
-   *
-   * @return \Drupal\cycling_uk_dynamics\Plugin\ProcessPluginInterface
-   *   Process plugin
-   */
-  private function getProcessPlugin(string $source, string $destinationEntity, string $destinationField): ProcessPluginInterface {
-    $pluginManager = \Drupal::service('plugin.manager.dynamics.process');
-
-    $map_from_type = $this->getSourceType($source);
-    $map_to_type = $this->getDestinationType($destinationEntity, $destinationField);
-
-    return $pluginManager->getProcessPlugin($map_from_type, $map_to_type);
-  }
-
-  /**
-   * Get the type of a Dynamics field.
-   *
-   * @param string $destinationEntity
-   *   Name of entity the field is attached to.
-   * @param string $destinationField
-   *   Field name.
-   *
-   * @return string
-   *   Type of field.
-   */
-  private function getDestinationType(string $destinationEntity, string $destinationField): string {
-    /**
-     * @var \Drupal\cycling_uk_dynamics\Connector $dynamicsConnector
-     */
-    $dynamicsConnector = \Drupal::service('cycling_uk_dynamics.connector');
-
-    $entity = $dynamicsConnector->getEntityDefinitionByLogicalName($destinationEntity);
-
-    foreach ($entity as $value) {
-      if ($value['LogicalName'] == $destinationField) {
-        $map_to_type = $value['AttributeType'];
-        break;
-      }
-    }
-
-    if (empty($map_to_type)) {
-      throw new RuntimeException('Could not find plugin');
-    }
-
-    return $map_to_type;
-  }
-
-  /**
-   * Given a field name, returns its type.
-   *
-   * @todo very similar code in _dynamics_get_type().
-   *
-   * @param string $sourceName
-   *   Name of a field.
-   *
-   * @return string
-   *   Type of $sourceName.
-   */
-  private function getSourceType(string $sourceName): string {
-    if (strpos($sourceName, 'webform') === 0) {
-      return 'textfield';
-    }
-    $webform = $this->getWebform();
-    $elements = $webform->getElementsInitializedAndFlattened();
-    $keys = explode(':', $sourceName);
-    return self::getSourceTypeWorker($elements, $keys);
-  }
-
-  /**
-   * Helper for self::getSourceType().
-   */
-  private static function getSourceTypeWorker(array $elements, array $keys) {
-    $key = array_shift($keys);
-    if (empty($keys)) {
-      return $elements[$key]['#type'];
-    }
-    if (empty($elements[$key]['#webform_composite_elements'])) {
-      return NULL;
-    }
-    return self::getSourceTypeWorker($elements[$key]['#webform_composite_elements'], $keys);
-  }
-
-  /**
-   * Given a field name, returns its contents.
-   *
-   * @param string $sourceName
-   *   Name of a field.
-   * @param array $data
-   *   Array of user-submitted webform data.
-   * @param Webform $webform
-   *   The Webform to generate the property data from.
-   * @param WebformSubmission $webformSubmission
-   *   The Webform Submission to generate the property data from.
-   * @return mixed
-   *   Data user submitted.
-   */
-  private function getSourceData(string $sourceName, array $data, Webform $webform, WebformSubmission $webformSubmission) {
-    if (strpos($sourceName, 'webform') === 0) {
-      return self::getWebformSourceData($sourceName, $webform, $webformSubmission);
-    }
-    $keys = explode(':', $sourceName);
-    return self::getSourceDataWorker($keys, $data);
-  }
-
-  /**
-   * Helper for self::getSourceData().
-   */
-  private static function getSourceDataWorker(array $keys, array $data) {
-    $key = array_shift($keys);
-    if (empty($keys)) {
-      return $data[$key];
-    }
-    if (empty($data[$key])) {
-      return NULL;
-    }
-    return self::getSourceDataWorker($keys, $data[$key]);
-  }
-
-  /**
-   * Get source data for 'static' webform properties.
-   *
-   * @param string $name
-   *   The name of the propery.
-   * @param Webform $webform
-   *   The Webform to generate the property data from.
-   * @param WebformSubmission $webformSubmission
-   *   The Webform Submission to generate the property data from.
-   * @return void
-   */
-  private static function getWebformSourceData(string $name, Webform $webform, WebformSubmission $webformSubmission) {
-
-  $url = $webformSubmission->toUrl();
-    $url->setOptions(['absolute' => TRUE, 'https' => TRUE]);
-
-    $data = [
-      'webform_submission_url' => $url->toString(),
-      'webform_submission_guid' => $webformSubmission->uuid(),
-      'webform_name' => $webform->label(),
-    ];
-    return $data[$name] ?? NULL;
   }
 
 }
