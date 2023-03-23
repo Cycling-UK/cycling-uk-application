@@ -132,17 +132,55 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
    */
   protected function getApplicationProcessQueueData(CyclingUkApplicationProcess $applicationProcess, string $action = Connector::CREATE) {
     $applicationStatus = $applicationProcess->getApplicationStatus();
+    $webformSubmission = $applicationProcess->getWebformSubmission();
+    $webform = $webformSubmission->getWebform();
+    $applicationType = $webform->getThirdPartySetting(
+      'cycling_uk_application',
+      'type',
+      ''
+    );
+    $applicationStage = $webform->getThirdPartySetting(
+      'cycling_uk_application',
+      'type',
+      ''
+    );
     $choiceValues = [
       'ready_for_review' => '770970000',
       'awaiting_further_info' => '770970001',
       'qualified' => '770970002',
       'failed' => '770970003',
     ];
+    $url = $applicationProcess->toUrl();
+    $url->setOptions(['absolute' => TRUE, 'https' => TRUE]);
     return [
       'data' => [
         [
+          'destination_field' => 'cuk_name',
+          'destination_value' => $applicationProcess->label(),
+        ],
+        [
+          'destination_field' => 'cuk_webformguid',
+          'destination_value' => $webform->uuid(),
+        ],
+        [
+          'destination_field' => 'cuk_applicationstage',
+          'destination_value' => $applicationStage,
+        ],
+        [
+          'destination_field' => 'cuk_applicationtype',
+          'destination_value' => $applicationType,
+        ],
+        [
           'destination_field' => 'cuk_applicationstatus',
           'destination_value' => $choiceValues[$applicationStatus],
+        ],
+        [
+          'destination_field' => 'cuk_applicationlink',
+          'destination_value' => $url->toString(),
+        ],
+        [
+          'destination_field' => 'cuk_applicationguid',
+          'destination_value' => $applicationProcess->uuid(),
         ],
       ],
       'drupal_entity_type' => 'cycling_uk_application_process',
@@ -204,7 +242,8 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
     // been pushed yet, and.
     if ($applicationProcess->hasDynamicsId()) {
       // Queue up and update to the dynamics application.
-      $this->queueLoader->load($this->getApplicationProcessQueueData($applicationProcess), Connector::UPDATE);
+      $applicationQueueData = $this->getApplicationProcessQueueData($applicationProcess, Connector::UPDATE);
+      $this->queueLoader->load([$applicationQueueData]);
     }
 
     if (

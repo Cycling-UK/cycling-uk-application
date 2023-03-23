@@ -275,7 +275,7 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
 
     $fields['dynamics_entity_type'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Dynamics entity type'))
-      ->setRequired(TRUE)
+      ->setRequired(FALSE)
       ->setSetting('max_length', 255)
       ->setDisplayOptions('form', [
         'type' => 'string_textfield',
