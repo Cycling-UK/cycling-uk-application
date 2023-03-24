@@ -11,6 +11,7 @@ use Drupal\cycling_uk_dynamics\CyclingUkDynamicsQueueData;
 use Drupal\cycling_uk_dynamics\CyclingUkDynamicsQueueLoader;
 use Drupal\cycling_uk_dynamics\Event\DynamicsEntityCreatedEvent;
 use Drupal\cycling_uk_dynamics\Event\PreDynamicsWebformPush;
+use Drupal\webform\Entity\Webform;
 use Drupal\webform\Entity\WebformSubmission;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -128,7 +129,26 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
   }
 
   /**
+   * Does the Webform have the application handler enabled.
    *
+   * @param \Drupal\webform\Entity\Webform $webform
+   *   The Webform to check.
+   */
+  protected function webformHasApplicationHandler(Webform $webform) {
+    return ($handler = $webform->getHandler('application_webform_handler'))
+      && $handler->isEnabled();
+  }
+
+  /**
+   * Convert an Application Process into Dynamics queue data.
+   *
+   * @param \Drupal\cycling_uk_application_process\Entity\CyclingUkApplicationProcess $applicationProcess
+   *   The Application Process to convert.
+   * @param string $action
+   *   The action to perform.
+   *
+   * @return array|bool
+   *   The converted queue data.
    */
   protected function getApplicationProcessQueueData(CyclingUkApplicationProcess $applicationProcess, string $action = Connector::CREATE) {
     $applicationStatus = $applicationProcess->getApplicationStatus();
@@ -220,8 +240,10 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
         // queue pushing the application to dynamics.
         $webformSubmission = WebformSubmission::load($event->getDrupalEntityId());
         $applicationProcess = $this->loadApplicationProcessByWebformSubmission($webformSubmission);
-        $applicationQueueData = $this->getApplicationProcessQueueData($applicationProcess);
-        $this->queueLoader->load([$applicationQueueData]);
+        if ($applicationProcess && $this->webformHasApplicationHandler($applicationProcess->getWebformSubmission()->getWebform())) {
+          $applicationQueueData = $this->getApplicationProcessQueueData($applicationProcess);
+          $this->queueLoader->load([$applicationQueueData]);
+        }
         break;
     }
 
