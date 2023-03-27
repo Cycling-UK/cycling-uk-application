@@ -180,7 +180,7 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
         ],
         [
           'destination_field' => 'cuk_webformguid',
-          'destination_value' => $webform->uuid(),
+          'destination_value' => $webformSubmission->uuid(),
         ],
         [
           'destination_field' => 'cuk_applicationstage',
