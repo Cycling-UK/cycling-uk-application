@@ -19,4 +19,4 @@ services:
 
   cycling_uk_dynamics.queue_data:
     class: Drupal\cycling_uk_dynamics\CyclingUkDynamicsQueueData
-    arguments: ['@event_dispatcher']
+    arguments: ['@event_dispatcher', '@plugin.manager.webform.element']

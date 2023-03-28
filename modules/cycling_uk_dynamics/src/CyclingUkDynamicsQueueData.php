@@ -7,6 +7,8 @@ use Drupal\cycling_uk_dynamics\Event\DynamicsQueueItemCreatedEvent;
 use Drupal\cycling_uk_dynamics\Plugin\ProcessPluginInterface;
 use Drupal\webform\Entity\Webform;
 use Drupal\webform\Entity\WebformSubmission;
+use Drupal\webform\Plugin\WebformElementManagerInterface;
+use Drupal\webform\WebformSubmissionInterface;
 
 /**
  * Class which provides a factory method to create dynamics queue data.
@@ -43,13 +45,28 @@ class CyclingUkDynamicsQueueData {
   protected array $data;
 
   /**
+   * The elements on this Webform.
+   *
+   * @var array
+   */
+  protected array $elements;
+
+  /**
+   * The webform element manager.
+   *
+   * @var \Drupal\webform\Plugin\WebformElementManagerInterface
+   */
+  protected $elementManager;
+
+  /**
    * Undocumented function.
    *
    * @param \Drupal\Component\EventDispatcher\ContainerAwareEventDispatcher $event_dispatcher
    *   The event dispatcher.
    */
-  public function __construct(ContainerAwareEventDispatcher $event_dispatcher) {
+  public function __construct(ContainerAwareEventDispatcher $event_dispatcher, WebformElementManagerInterface $element_manager) {
     $this->eventDispatcher = $event_dispatcher;
+    $this->elementManager = $element_manager;
   }
 
   /**
@@ -88,6 +105,31 @@ class CyclingUkDynamicsQueueData {
         'destination_field' => $destinationField,
         'destination_value' => $processPlugin->getDestination(),
       ];
+    }
+    $header = $this->buildHeader();
+    $record = $this->buildRecord($webformSubmission);
+    foreach ($record as $index => $answer) {
+      $queueSubmissions["cuk_webformquestion_$index"] = [
+        'data' => [
+          [
+            'destination_field' => 'cuk_name',
+            'destination_value' => $header[$index],
+          ],
+          [
+            'destination_field' => 'cuk_answerraw',
+            'destination_value' => $answer,
+          ],
+          [
+            'destination_field' => 'cuk_webformguid',
+            'destination_value' => $webformSubmission->uuid(),
+          ],
+        ],
+        'drupal_entity_type' => 'webform_question_answer',
+        'drupal_entity_id' => $webformSubmission->id(),
+        'destination_entity' => 'cuk_webformquestion',
+        'action' => Connector::CREATE,
+      ];
+
     }
     foreach ($queueSubmissions as $destination => $queueSubmission) {
       $queueItemCreatedEvent = new DynamicsQueueItemCreatedEvent($queueSubmission);
@@ -267,6 +309,78 @@ class CyclingUkDynamicsQueueData {
       'webform_name' => $webform->label(),
     ];
     return $data[$name] ?? NULL;
+  }
+
+  /**
+   * Builds the header of the data to be exported.
+   */
+  protected function buildHeader() {
+    $elements = $this->getElements();
+    $header = [];
+
+    // Build element columns headers.
+    foreach ($elements as $element) {
+      $header = array_merge($header, $this->elementManager->invokeMethod('buildExportHeader', $element, $this->getExportConfig()));
+    }
+    return $header;
+  }
+
+  /**
+   * Builds the data to be exported.
+   */
+  protected function buildRecord(WebformSubmissionInterface $webform_submission) {
+    $elements = $this->getElements();
+    $record = [];
+    // Build record element columns.
+    foreach ($elements as $column_name => $element) {
+      $element['#webform_key'] = $column_name;
+      $record = array_merge($record, $this->elementManager->invokeMethod('buildExportRecord', $element, $webform_submission, $this->getExportConfig()));
+    }
+    return $record;
+  }
+
+  /**
+   * Builds the export config.
+   */
+  protected function getExportConfig() : array {
+    return [
+      'exporter' => 'delimited',
+      'multiple_delimiter' => ';',
+      'header_format' => 'label',
+      'header_prefix' => '1',
+      'header_prefix_label_delimiter' => ': ',
+      'header_prefix_key_delimiter' => '__',
+      'likert_answers_format' => 'label',
+      'webform' => $this->getWebform(),
+    ];
+  }
+
+  /**
+   * Get webform elements.
+   *
+   * @return array
+   *   An associative array containing webform elements keyed by name.
+   */
+  protected function getElements() {
+    if (isset($this->elements)) {
+      return $this->elements;
+    }
+    $mappings = $this->getWebform()->getThirdPartySettings('cycling_uk_dynamics');
+    $mappedElements = array_filter($mappings, function ($mapping) {
+      return isset($mapping['source']);
+    });
+    $mappedElements = array_map(function ($mapping) {
+      return $mapping['source'];
+    }, $mappedElements);
+
+    $this->elements = array_filter(
+      $this->getWebform()->getElementsInitializedFlattenedAndHasValue('view'),
+      function ($field_id) use ($mappedElements) {
+        return !in_array($field_id, $mappedElements);
+      },
+     ARRAY_FILTER_USE_KEY);
+    // @todo exclude mapped elements
+    return $this->elements;
   }
 
 }
