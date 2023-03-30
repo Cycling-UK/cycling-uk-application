@@ -108,28 +108,37 @@ class CyclingUkDynamicsQueueData {
     }
     $header = $this->buildHeader();
     $record = $this->buildRecord($webformSubmission);
-    foreach ($record as $index => $answer) {
-      $queueSubmissions["cuk_webformquestion_$index"] = [
-        'data' => [
-          [
-            'destination_field' => 'cuk_name',
-            'destination_value' => $header[$index],
+    foreach ($record as $elementIndex => $element) {
+      foreach ($element['value'] as $valueIndex => $answer) {
+        $queueSubmissions["cuk_webformquestion_{$elementIndex}_{$valueIndex}"] = [
+          'data' => [
+            [
+              'destination_field' => 'cuk_name',
+              'destination_value' => $header[$elementIndex][$valueIndex],
+            ],
+            [
+              'destination_field' => 'cuk_answerraw',
+              'destination_value' => $answer,
+            ],
+            [
+              'destination_field' => 'cuk_webformguid',
+              'destination_value' => $webformSubmission->uuid(),
+            ],
+            [
+              'destination_field' => 'cuk_webformpagename',
+              'destination_value' => $element['page'],
+            ],
+            [
+              'destination_field' => 'cuk_fieldsetname',
+              'destination_value' => $element['fieldset'],
+            ],
           ],
-          [
-            'destination_field' => 'cuk_answerraw',
-            'destination_value' => $answer,
-          ],
-          [
-            'destination_field' => 'cuk_webformguid',
-            'destination_value' => $webformSubmission->uuid(),
-          ],
-        ],
-        'drupal_entity_type' => 'webform_question_answer',
-        'drupal_entity_id' => $webformSubmission->id(),
-        'destination_entity' => 'cuk_webformquestion',
-        'action' => Connector::CREATE,
-      ];
-
+          'drupal_entity_type' => 'webform_question_answer',
+          'drupal_entity_id' => $webformSubmission->id(),
+          'destination_entity' => 'cuk_webformquestion',
+          'action' => Connector::CREATE,
+        ];
+      }
     }
     foreach ($queueSubmissions as $destination => $queueSubmission) {
       $queueItemCreatedEvent = new DynamicsQueueItemCreatedEvent($queueSubmission);
@@ -320,7 +329,7 @@ class CyclingUkDynamicsQueueData {
 
     // Build element columns headers.
     foreach ($elements as $element) {
-      $header = array_merge($header, $this->elementManager->invokeMethod('buildExportHeader', $element, $this->getExportConfig()));
+      $header[] = $this->elementManager->invokeMethod('buildExportHeader', $element, $this->getExportConfig());
     }
     return $header;
   }
@@ -334,9 +343,40 @@ class CyclingUkDynamicsQueueData {
     // Build record element columns.
     foreach ($elements as $column_name => $element) {
       $element['#webform_key'] = $column_name;
-      $record = array_merge($record, $this->elementManager->invokeMethod('buildExportRecord', $element, $webform_submission, $this->getExportConfig()));
+      $page = $this->getPage($webform_submission, $element);
+      $fieldset = $this->getFieldset($webform_submission, $element);
+      $record[] = [
+        'value' => $this->elementManager->invokeMethod('buildExportRecord', $element, $webform_submission, $this->getExportConfig()),
+        'page' => $page ? $page['#title'] : NULL,
+        'fieldset' => $fieldset ? $fieldset['#title'] : NULL,
+      ];
     }
     return $record;
+  }
+
+  /**
+   *
+   */
+  protected function getPage(WebformSubmissionInterface $webform_submission, array $element) {
+    foreach ($element["#webform_parents"] as $parent) {
+      $parent = $webform_submission->getWebform()->getElement($parent);
+      if ($parent["#webform_plugin_id"] == 'webform_wizard_page') {
+        return $parent;
+      }
+    }
+    return NULL;
+  }
+
+  /**
+   * Get the first parent which is a fieldset.
+   */
+  protected function getFieldset(WebformSubmissionInterface $webform_submission, array $element) {
+    foreach ($element["#webform_parents"] as $parent) {
+      $parent = $webform_submission->getWebform()->getElement($parent);
+      if ($parent["#webform_plugin_id"] == 'fieldset') {
+        return $parent;
+      }
+    }
   }
 
   /**
