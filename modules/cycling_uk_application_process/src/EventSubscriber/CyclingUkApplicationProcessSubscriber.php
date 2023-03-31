@@ -161,7 +161,7 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
     );
     $applicationStage = $webform->getThirdPartySetting(
       'cycling_uk_application',
-      'type',
+      'stage',
       ''
     );
     $choiceValues = [
@@ -187,7 +187,7 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
           'destination_value' => $applicationStage,
         ],
         [
-          'destination_field' => 'cuk_applicationtype',
+          'destination_field' => 'cuk_applicationprogram',
           'destination_value' => $applicationType,
         ],
         [
