@@ -33,7 +33,9 @@ class DateToDateTime implements ProcessPluginInterface {
    * {@inheritdoc}
    */
   public function getDestination() {
-    return $this->data;
+    if (!empty($this->data)) {
+      return $this->data;
+    }
   }
 
 }

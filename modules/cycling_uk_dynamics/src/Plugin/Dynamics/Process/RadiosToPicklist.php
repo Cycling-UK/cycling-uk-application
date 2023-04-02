@@ -33,10 +33,12 @@ class RadiosToPicklist implements ProcessPluginInterface {
    * {@inheritdoc}
    */
   public function getDestination() {
-    if (count($this->data) == 1) {
-      return array_pop($this->data);
+    if (!empty($this->data)) {
+      if (count($this->data) == 1) {
+         return array_pop($this->data);
+      }
+      return $this->data;
     }
-    return $this->data;
   }
 
 }
