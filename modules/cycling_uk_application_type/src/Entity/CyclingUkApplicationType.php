@@ -230,7 +230,7 @@ class CyclingUkApplicationType extends ContentEntityBase implements CyclingUkApp
       ->setLabel(t('Logo'))
       ->setDescription(t('The logo for the application type'))
       ->setDisplayOptions('view', [
-        'type' => 'image_image',
+        'type' => 'image',
         'weight' => -4,
         'label' => 'hidden',
         'settings' => [
@@ -250,7 +250,7 @@ class CyclingUkApplicationType extends ContentEntityBase implements CyclingUkApp
       ->setSetting('file_extensions', 'pdf')
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'type' => 'file_generic',
+        'type' => 'file_default',
         'weight' => -3,
       ])
       ->setDisplayOptions('form', [
