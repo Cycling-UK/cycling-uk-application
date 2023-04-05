@@ -84,6 +84,9 @@ class CyclingUkDynamicsQueueData {
       if (empty($mapping['source']) || empty($mapping['destination']) || $mapping['source'] == 'none' || $mapping['destination'] == 'none') {
         continue;
       }
+      if (!$this->webformFieldExist($mapping['source'], $webform)) {
+        continue;
+      }
 
       [$destinationEntity, $destinationField] = explode(':', $mapping['destination']);
 
@@ -281,6 +284,24 @@ class CyclingUkDynamicsQueueData {
     }
     $keys = explode(':', $sourceName);
     return self::getSourceDataWorker($keys, $data);
+  }
+
+  /**
+   * Check whether a webform field exists.
+   *
+   * @param string $sourceName
+   *   Name of a field.
+   * @param \Drupal\webform\Entity\Webform $webform
+   *   The Webform to generate the property data from.
+   *
+   * @return bool
+   *   Whether the field exists.
+   */
+  private function webformFieldExist(string $sourceName, Webform $webform) : bool {
+    if (strpos($sourceName, 'webform') === 0) {
+      return TRUE;
+    }
+    return (bool) $webform->getElement($sourceName);
   }
 
   /**
