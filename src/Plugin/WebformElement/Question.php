@@ -41,7 +41,6 @@ class Question extends WebformElementBase {
       'question_title' => '',
       'question_type' => 'yes_no',
       'question_required' => FALSE,
-      'question_enabled' => FALSE,
       // Photo evidence section.
       'file_enable' => FALSE,
       'file_title' => '',
@@ -81,22 +80,10 @@ class Question extends WebformElementBase {
       '#open' => TRUE,
     ];
 
-    $form['element']['question']['question_enabled'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Enabled'),
-    ];
-
     $form['element']['question']['question_title'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Label'),
-      '#states' => [
-        'visible' => [
-          [':input[name="properties[question_enabled]"]' => ['checked' => TRUE]],
-        ],
-        'required' => [
-          [':input[name="properties[question_enabled]"]' => ['checked' => TRUE]],
-        ],
-      ],
+      '#required' => TRUE,
     ];
 
     $form['element']['question']['question_type'] = [
@@ -106,21 +93,11 @@ class Question extends WebformElementBase {
         'yes_no' => $this->t('Yes/No'),
         'yes_no_unsure' => $this->t('Yes/No/Unsure'),
       ],
-      '#states' => [
-        'visible' => [
-          [':input[name="properties[question_enabled]"]' => ['checked' => TRUE]],
-        ],
-      ],
     ];
 
     $form['element']['question']['question_required'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Required'),
-      '#states' => [
-        'visible' => [
-          [':input[name="properties[question_enabled]"]' => ['checked' => TRUE]],
-        ],
-      ],
     ];
 
     $form['element']['file'] = [
