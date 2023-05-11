@@ -33,7 +33,9 @@ class CheckboxToBoolean implements ProcessPluginInterface {
    * {@inheritdoc}
    */
   public function getDestination() {
-    return (bool) $this->data;
+    if (!empty($this->data)) {
+      return (bool) $this->data;
+    }
   }
 
 }
