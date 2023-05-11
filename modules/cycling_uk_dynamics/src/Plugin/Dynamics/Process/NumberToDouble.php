@@ -5,16 +5,16 @@ namespace Drupal\cycling_uk_dynamics\Plugin\Dynamics\Process;
 use Drupal\cycling_uk_dynamics\Plugin\ProcessPluginInterface;
 
 /**
- * Map Drupal Webform Number field to Dynamics Integer property.
+ * Map Drupal Webform Number field to Dynamics Double property.
  *
  * @ProcessPluginAnnotation(
  *   id = "NumberToFloat",
  *   map_from = "number",
- *   map_to = "Float",
+ *   map_to = "Double",
  *   label = @Translation("Map Drupal Webform Number field to Dynamics Float property"),
  * )
  */
-class NumberToFloat implements ProcessPluginInterface {
+class NumberToDouble implements ProcessPluginInterface {
   /**
    * Data to be transformed.
    *
