@@ -25,7 +25,7 @@ class Connector {
   const CACHE_TAG = 'dynamics_query';
 
   /**
-   * Eg 'https://cyclingukdev.crm11.dynamics.com/'.
+   * Eg 'https://xxxx.crm11.dynamics.com/'.
    *
    * @var string
    */
@@ -46,7 +46,7 @@ class Connector {
   protected string $applicationSecret;
 
   /**
-   * Eg 'https://cyclingukdev.api.crm11.dynamics.com/api/data/v9.2/'.
+   * Eg 'https://xxxx.api.crm11.dynamics.com/api/data/v9.2/'.
    *
    * @var string
    */
