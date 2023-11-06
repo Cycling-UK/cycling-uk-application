@@ -79,6 +79,7 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
       ->getStorage('cycling_uk_application_type');
     $applicationTypeResults = $applicationTypeStorage->getQuery()
       ->condition('machine_name', $machineName)
+      ->accessCheck(FALSE)
       ->execute();
     return !empty($applicationTypeResults) ? $applicationTypeStorage->load(reset($applicationTypeResults)) : FALSE;
   }
@@ -98,6 +99,7 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
       ->getStorage('cycling_uk_application_process');
     $applicationProcessResults = $applicationProcessStorage->getQuery()
       ->condition('webform_submission', $webformSubmission->id())
+      ->accessCheck(FALSE)
       ->execute();
     return !empty($applicationProcessResults) ? $applicationProcessStorage->load(reset($applicationProcessResults)) : FALSE;
   }
