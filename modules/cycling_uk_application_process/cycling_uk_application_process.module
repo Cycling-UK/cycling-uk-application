@@ -49,6 +49,7 @@ function cycling_uk_application_process_user_cancel($edit, UserInterface $accoun
       $cycling_uk_application_process_ids = $storage->getQuery()
         ->condition('uid', $account->id())
         ->condition('status', 1)
+        ->accessCheck(FALSE)
         ->execute();
       foreach ($storage->loadMultiple($cycling_uk_application_process_ids) as $cycling_uk_application_process) {
         $cycling_uk_application_process->set('status', FALSE);
@@ -61,6 +62,7 @@ function cycling_uk_application_process_user_cancel($edit, UserInterface $accoun
       $storage = \Drupal::entityTypeManager()->getStorage('cycling_uk_application_process');
       $cycling_uk_application_process_ids = $storage->getQuery()
         ->condition('uid', $account->id())
+        ->accessCheck(FALSE)
         ->execute();
       foreach ($storage->loadMultiple($cycling_uk_application_process_ids) as $cycling_uk_application_process) {
         $cycling_uk_application_process->setOwnerId(0);
@@ -78,6 +80,7 @@ function cycling_uk_application_process_user_predelete(UserInterface $account) {
   $storage = \Drupal::entityTypeManager()->getStorage('cycling_uk_application_process');
   $cycling_uk_application_process_ids = $storage->getQuery()
     ->condition('uid', $account->id())
+    ->accessCheck(FALSE)
     ->execute();
   $cycling_uk_application_processes = $storage->loadMultiple($cycling_uk_application_process_ids);
   $storage->delete($cycling_uk_application_processes);
