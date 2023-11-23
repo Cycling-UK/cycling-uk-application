@@ -3,7 +3,7 @@
     "description": "Wrapper for the AlexaCRM/dynamics-webapi-toolkit",
     "type": "drupal-custom-module",
     "require": {
-        "alexacrm/dynamics-webapi-toolkit": "^3.2",
+        "alexacrm/dynamics-webapi-toolkit": "^4.0-beta",
         "drupal/webform": "^6.0"
     }
 }
