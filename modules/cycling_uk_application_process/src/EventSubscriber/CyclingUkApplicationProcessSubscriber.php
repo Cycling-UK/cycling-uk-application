@@ -3,6 +3,7 @@
 namespace Drupal\cycling_uk_application_process\EventSubscriber;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\node\Entity\Node;
 use Drupal\cycling_uk_application_process\Entity\CyclingUkApplicationProcess;
 use Drupal\cycling_uk_application_process\Event\ApplicationStatusChanged;
 use Drupal\cycling_uk_application_type\Entity\CyclingUkApplicationType;
@@ -131,6 +132,83 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
   }
 
   /**
+   * Gets a node by field_experience_application_id.
+   *
+   * @param string $applicationId
+   *   The application ID to search for.
+   *
+   * @return \Drupal\node\NodeInterface|null
+   *   The node with a matching field_experience_application_id, or NULL if not found.
+   */
+  protected function getNodeByApplicationId($applicationId) {
+    $query = \Drupal::entityQuery('node')
+      ->accessCheck()
+      ->condition('type', 'point_of_interest')
+      ->condition('field_experience_application_id', $applicationId)
+      ->range(0, 1);
+
+    $result = $query->execute();
+
+    if ($result) {
+      // Get the first matching node.
+      $node_id = reset($result);
+      return $node_id;
+    }
+
+    return null;
+  }
+
+  /**
+   * Creates a point of interest node based on a cycling application process.
+   *
+   * @param \Drupal\custom_module\CyclingUkApplicationProcess $applicationProcess
+   *   The cycling application process.
+   */
+  protected function createPoiNode(CyclingUkApplicationProcess $applicationProcess) {
+    $applicationId = $applicationProcess->getDynamicsId();
+
+    // Check if a node with the given field_experience_application_id exists.
+    $existingNode = $this->getNodeByApplicationId($applicationId);
+
+    if ($existingNode) {
+      // Node with matching field_experience_application_id exists, return its ID.
+      return '/node/'. $existingNode;
+    }
+
+    $webformSubmission = $applicationProcess->getWebformSubmission()->getData();
+
+    $address_data = [
+      'country_code' => 'GB',
+      'organization' => $webformSubmission['business_name'],
+      'locality' => $webformSubmission['address_town'],
+      'postal_code' => $webformSubmission['address_postcode'],
+      'address_line1' => $webformSubmission['address_line_1'],
+      'address_line2' => $webformSubmission['address_line_2'],
+    ];
+
+    $node = Node::create([
+      'type' => 'point_of_interest',
+      'title' => $webformSubmission['business_name'],
+      'field_address' => $address_data,
+      'field_facebook' => $webformSubmission['general_facebook'],
+      'field_instagram' => $webformSubmission['general_instagram'],
+      'field_twitter' => $webformSubmission['general_twitter'],
+      'field_website' => $webformSubmission['general_website'],
+      'field_experience_project_flag' => TRUE,
+      'field_experience_application_id' => $applicationId,
+      'field_accreditation_status' => $applicationProcess->getApplicationStatus(),
+    ]);
+
+    // Save the node.
+    $node->save();
+
+    // !!! REMOVE DEBUGGING CODE !!!
+    $foo = 'bar';
+
+    return '/node/' . $node->id();
+  }
+
+  /**
    * Does the Webform have the application handler enabled.
    *
    * @param \Drupal\webform\Entity\Webform $webform
@@ -171,6 +249,7 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
       'awaiting_further_info' => '770970001',
       'qualified' => '770970002',
       'failed' => '770970003',
+      'accredited' => '11111111',
     ];
     $url = $applicationProcess->toUrl();
     $url->setOptions(['absolute' => TRUE, 'https' => TRUE]);
@@ -261,6 +340,14 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
     /** @var \Drupal\cycling_uk_application_process\Entity\CyclingUkApplicationProcess $applicationProcess */
     $applicationProcess = $event->applicationProcess;
     $submissionMode = $applicationProcess->getApplicationType()->getSubmissionMode();
+
+    // If the application is qualified create a POI node.
+    if ($applicationProcess->isQualified()) {
+      $poiNodePath = $this->createPoiNode($applicationProcess);
+    };
+
+    $bar = 'foo';
+
     // If the application is now qualified, assuming that flow can only happen
     // once, and the application process has no dynamics ID, assuming it hasn't
     // been pushed yet, and.
@@ -273,6 +360,7 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
     if (
       $submissionMode == CyclingUkApplicationType::SUBMISSION_MODE_ON_QUALIFICATION
       && $applicationProcess->isQualified()) {
+      $poiNid =$this->createPoiNode($applicationProcess);
       $queueData = $this->queueData->getQueueData($applicationProcess->getWebformSubmission());
       $this->queueLoader->load($queueData);
     }

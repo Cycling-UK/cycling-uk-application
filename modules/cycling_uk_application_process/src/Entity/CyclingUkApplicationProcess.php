@@ -187,7 +187,7 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
    * {@inheritdoc}
    */
   public function isQualified() : bool {
-    return $this->getApplicationStatus() === 'qualified';
+    return $this->getApplicationStatus() === 'qualified' || $this->getApplicationStatus() === 'accredited' ;
   }
 
   /**
