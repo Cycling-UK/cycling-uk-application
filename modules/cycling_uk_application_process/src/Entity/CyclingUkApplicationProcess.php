@@ -296,6 +296,7 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
           'ready_for_review' => 'Ready for review',
           'awaiting_further_info' => 'Awaiting further information',
           'qualified' => 'Qualified',
+          'accredited' => 'Accredited',
           'failed' => 'Failed',
         ],
       ])
