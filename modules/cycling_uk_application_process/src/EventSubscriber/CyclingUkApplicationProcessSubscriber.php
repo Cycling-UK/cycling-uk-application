@@ -249,7 +249,7 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
       'awaiting_further_info' => '770970001',
       'qualified' => '770970002',
       'failed' => '770970003',
-      'accredited' => '11111111',
+      'accredited' => '770970006',
     ];
     $url = $applicationProcess->toUrl();
     $url->setOptions(['absolute' => TRUE, 'https' => TRUE]);
