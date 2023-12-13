@@ -37,10 +37,12 @@ interface CyclingUkApplicationProcessInterface extends ContentEntityInterface, E
    */
   public function setWebformSubmission(WebformSubmissionInterface $webform) : CyclingUkApplicationProcessInterface;
 
-  /**
-   * @return string
+   /**
+   * @param string $poiNodeLink
+   *
+   * @return \Drupal\cycling_uk_application_process\CyclingUkApplicationProcessInterface
    */
-  public function setPoiNodeLink() : ?string;
+  public function setPoiNodeLink(string $poiNodeLink): CyclingUkApplicationProcessInterface;
 
   /**
    * @return string

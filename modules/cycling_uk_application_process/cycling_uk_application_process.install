@@ -1,0 +1,32 @@
+<?php
+
+use Drupal\Core\Field\BaseFieldDefinition;
+
+/**
+ * Implements hook_update_N().
+ *
+ * Adds poi node link field to the application process entity.
+ *
+*/
+function cycling_uk_application_process_update_8002() {
+
+      $fieldStorageDefinition = BaseFieldDefinition::create('string')
+      ->setLabel(t('POI node link'))
+      ->setRequired(FALSE)
+      ->setSetting('max_length', 255)
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+        'weight' => 2,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'hidden',
+        'type' => 'string',
+        'weight' => 3,
+      ])
+      ->setDisplayConfigurable('form', FALSE);
+
+      \Drupal::entityDefinitionUpdateManager()
+      ->installFieldStorageDefinition('poi_node_link', 'cycling_uk_application_process', 'cycling_uk_application_process', $fieldStorageDefinition);
+}
+

@@ -134,8 +134,8 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
   /**
    * {@inheritdoc}
    */
-  public function setPoiNodeLink(string $poinodelink): CyclingUkApplicationProcessInterface {
-    $this->set('poi_node_link', $poinodelink);
+  public function setPoiNodeLink(string $poiNodelink): CyclingUkApplicationProcessInterface {
+    $this->set('poi_node_link', $poiNodelink);
     return $this;
   }
 
@@ -330,20 +330,21 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
       ->setDisplayConfigurable('view', TRUE)
       ->setRequired(TRUE);
 
-      $fields['poi_node_link'] = BaseFieldDefinition::create('link')
-        ->setLabel(t('POI node link'))
-        ->setDescription(t('Link to the related POIN node'))
-        ->setDisplayOptions('view', [
-          'label' => 'hidden',
-          'type' => 'link',
-          'weight' => 3,
-        ])
-        ->setDisplayOptions('form', [
-          'type' => 'link_default',
-          'weight' => 2,
-        ])
-        ->setDisplayConfigurable('form', TRUE)
-        ->setDisplayConfigurable('view', TRUE);
+    $fields['poi_node_link'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('POI node link'))
+      ->setRequired(FALSE)
+      ->setSetting('max_length', 255)
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+        'weight' => 2,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'hidden',
+        'type' => 'string',
+        'weight' => 3,
+      ])
+      ->setDisplayConfigurable('form', FALSE);
 
     $fields['status'] = BaseFieldDefinition::create('boolean')
       ->setLabel(t('Status'))
