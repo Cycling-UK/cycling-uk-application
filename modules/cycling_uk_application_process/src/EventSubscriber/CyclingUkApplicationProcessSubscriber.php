@@ -283,6 +283,10 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
           'destination_field' => 'cuk_applicationguid',
           'destination_value' => $applicationProcess->uuid(),
         ],
+        [
+          'destination_field' => 'cuk_websitenodelink',
+          'destination_value' => 'test',
+        ]
       ],
       'drupal_entity_type' => 'cycling_uk_application_process',
       'drupal_entity_id' => $applicationProcess->id(),
@@ -345,8 +349,6 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
     if ($applicationProcess->isQualified()) {
       $poiNodePath = $this->createPoiNode($applicationProcess);
     };
-
-    $bar = 'foo';
 
     // If the application is now qualified, assuming that flow can only happen
     // once, and the application process has no dynamics ID, assuming it hasn't

@@ -315,6 +315,21 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
       ->setDisplayConfigurable('view', TRUE)
       ->setRequired(TRUE);
 
+      $fields['poi_node_link'] = BaseFieldDefinition::create('link')
+        ->setLabel(t('POI node link'))
+        ->setDescription(t('Link to the related POIN node'))
+        ->setDisplayOptions('view', [
+          'label' => 'hidden',
+          'type' => 'link',
+          'weight' => 3,
+        ])
+        ->setDisplayOptions('form', [
+          'type' => 'link_default',
+          'weight' => 2,
+        ])
+        ->setDisplayConfigurable('form', TRUE)
+        ->setDisplayConfigurable('view', TRUE);
+
     $fields['status'] = BaseFieldDefinition::create('boolean')
       ->setLabel(t('Status'))
       ->setDefaultValue(TRUE)
