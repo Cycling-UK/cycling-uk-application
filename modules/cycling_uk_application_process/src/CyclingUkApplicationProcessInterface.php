@@ -40,7 +40,12 @@ interface CyclingUkApplicationProcessInterface extends ContentEntityInterface, E
   /**
    * @return string
    */
-  public function setPoinNodeLink() : ?string;
+  public function setPoiNodeLink() : ?string;
+
+  /**
+   * @return string
+   */
+  public function getPoiNodeLink() : ?string;
 
   /**
    * @return string

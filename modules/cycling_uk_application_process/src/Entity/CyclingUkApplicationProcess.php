@@ -130,6 +130,7 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
     $this->set('application_type', $applicationType->id());
     return $this;
   }
+
   /**
    * {@inheritdoc}
    */
@@ -137,6 +138,14 @@ class CyclingUkApplicationProcess extends ContentEntityBase implements CyclingUk
     $this->set('poi_node_link', $poinodelink);
     return $this;
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getPoiNodeLink(): ?string {
+    return $this->get('poi_node_link')->value;
+  }
+
   /**
    * {@inheritdoc}
    */

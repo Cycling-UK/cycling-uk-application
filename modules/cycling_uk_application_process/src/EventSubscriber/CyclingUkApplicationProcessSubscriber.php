@@ -285,7 +285,7 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
         ],
         [
           'destination_field' => 'cuk_websitenodelink',
-          'destination_value' => 'test',
+          'destination_value' => $applicationProcess->getPoiNodeLink(),
         ]
       ],
       'drupal_entity_type' => 'cycling_uk_application_process',
@@ -348,6 +348,7 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
     // If the application is qualified create a POI node.
     if ($applicationProcess->isQualified()) {
       $poiNodePath = $this->createPoiNode($applicationProcess);
+      $applicationProcess->setPoiNodeLink($poiNodePath);
     };
 
     // If the application is now qualified, assuming that flow can only happen
