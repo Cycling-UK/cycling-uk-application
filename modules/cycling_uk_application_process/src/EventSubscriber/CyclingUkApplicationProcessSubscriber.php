@@ -4,6 +4,7 @@ namespace Drupal\cycling_uk_application_process\EventSubscriber;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\node\Entity\Node;
+use Drupal\Core\Url;
 use Drupal\cycling_uk_application_process\Entity\CyclingUkApplicationProcess;
 use Drupal\cycling_uk_application_process\Event\ApplicationStatusChanged;
 use Drupal\cycling_uk_application_type\Entity\CyclingUkApplicationType;
@@ -202,10 +203,10 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
     // Save the node.
     $node->save();
 
-    // !!! REMOVE DEBUGGING CODE !!!
-    $foo = 'bar';
+    $url = $node->toUrl();
+    $url->setOptions(['absolute' => TRUE, 'https' => TRUE]);
 
-    return '/node/' . $node->id();
+    return $url->toString();
   }
 
   /**
@@ -344,9 +345,10 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
     /** @var \Drupal\cycling_uk_application_process\Entity\CyclingUkApplicationProcess $applicationProcess */
     $applicationProcess = $event->applicationProcess;
     $submissionMode = $applicationProcess->getApplicationType()->getSubmissionMode();
+    $poi = $applicationProcess->getApplicationType()->isPoi();
 
     // If the application is qualified create a POI node.
-    if ($applicationProcess->isQualified()) {
+    if ($applicationProcess->isQualified() && $poi) {
       $poiNodePath = $this->createPoiNode($applicationProcess);
       $applicationProcess->setPoiNodeLink($poiNodePath);
     };

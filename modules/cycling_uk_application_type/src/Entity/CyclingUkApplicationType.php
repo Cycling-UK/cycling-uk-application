@@ -114,6 +114,13 @@ class CyclingUkApplicationType extends ContentEntityBase implements CyclingUkApp
   /**
    * {@inheritdoc}
    */
+  public function isPoi() {
+    return (bool) $this->get('poi')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function setStatus($status) {
     $this->set('status', $status);
     return $this;
@@ -277,6 +284,29 @@ class CyclingUkApplicationType extends ContentEntityBase implements CyclingUkApp
       ])
       ->setDisplayConfigurable('view', TRUE);
 
+    $fields['poi'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Does the application create a Point of Interest'))
+      ->setDescription(t('A boolean indicating whether the cycling uk application type creates a point of interest.'))
+      ->setDefaultValue(TRUE)
+      ->setSetting('on_label', 'Enabled')
+      ->setDisplayOptions('form', [
+        'type' => 'boolean_checkbox',
+        'settings' => [
+          'display_label' => TRUE,
+        ],
+        'weight' => 0,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('view', [
+        'type' => 'boolean',
+        'label' => 'above',
+        'weight' => 0,
+        'settings' => [
+          'format' => 'enabled-disabled',
+        ],
+      ])
+      ->setDisplayConfigurable('view', TRUE);
+
     $fields['status'] = BaseFieldDefinition::create('boolean')
       ->setLabel(t('Status'))
       ->setDescription(t('A boolean indicating whether the cycling uk application type is enabled.'))
@@ -299,6 +329,7 @@ class CyclingUkApplicationType extends ContentEntityBase implements CyclingUkApp
         ],
       ])
       ->setDisplayConfigurable('view', TRUE);
+
 
     $fields['application_submission'] = BaseFieldDefinition::create('list_string')
       ->setLabel(t('Application Setting'))
