@@ -196,7 +196,9 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
       };
 
       if(!$validformdata) {
-        throw new \Exception("Submission missing required fields");
+        $errorMessage = 'Weboform submission does not contain all required fields';
+        \Drupal::logger('cycling_uk_application')->error($errorMessage);
+        throw new \Exception($errorMessage);
       }
 
       $address_data = [
