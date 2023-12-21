@@ -196,7 +196,7 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
       };
 
       if(!$validformdata) {
-        $errorMessage = 'Weboform submission does not contain all required fields';
+        $errorMessage = 'Webform submission does not contain all required fields';
         \Drupal::logger('cycling_uk_application')->error($errorMessage);
         throw new \Exception($errorMessage);
       }
