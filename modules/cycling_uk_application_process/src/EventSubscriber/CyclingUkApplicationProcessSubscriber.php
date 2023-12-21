@@ -17,6 +17,7 @@ use Drupal\webform\Entity\Webform;
 use Drupal\webform\Entity\WebformSubmission;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+
 /**
  * Cycling UK application process event subscriber.
  */
@@ -153,7 +154,8 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
     if ($result) {
       // Get the first matching node.
       $node_id = reset($result);
-      return $node_id;
+      $node = Node::load($node_id);
+      return $node;
     }
 
     return null;
@@ -170,39 +172,58 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
 
     // Check if a node with the given field_experience_application_id exists.
     $existingNode = $this->getNodeByApplicationId($applicationId);
+    $node = $existingNode;
 
-    if ($existingNode) {
-      // Node with matching field_experience_application_id exists, return its ID.
-      return '/node/'. $existingNode;
+    if (!$existingNode) {
+      $webformSubmission = $applicationProcess->getWebformSubmission()->getData();
+
+      $form_keys = [
+        'business_name',
+        'address_town',
+        'address_postcode',
+        'address_line_1',
+        'address_line_2',
+        'general_facebook',
+        'general_instagram',
+        'general_twitter',
+        'general_website',
+      ];
+
+      $validformdata = true;
+
+      foreach ($form_keys as $key) {
+        $validformdata = isset($webformSubmission[$key]);
+      };
+
+      if(!$validformdata) {
+        throw new \Exception("Submission missing required fields");
+      }
+
+      $address_data = [
+        'country_code' => 'GB',
+        'organization' => $webformSubmission['business_name'],
+        'locality' => $webformSubmission['address_town'],
+        'postal_code' => $webformSubmission['address_postcode'],
+        'address_line1' => $webformSubmission['address_line_1'],
+        'address_line2' => $webformSubmission['address_line_2'],
+      ];
+
+      $node = Node::create([
+        'type' => 'point_of_interest',
+        'title' => $webformSubmission['business_name'],
+        'field_address' => $address_data,
+        'field_facebook' => $webformSubmission['general_facebook'],
+        'field_instagram' => $webformSubmission['general_instagram'],
+        'field_twitter' => $webformSubmission['general_twitter'],
+        'field_website' => $webformSubmission['general_website'],
+        'field_experience_project_flag' => TRUE,
+        'field_experience_application_id' => $applicationId,
+        'field_accreditation_status' => $applicationProcess->getApplicationStatus(),
+      ]);
+
+      // Save the node.
+      $node->save();
     }
-
-    $webformSubmission = $applicationProcess->getWebformSubmission()->getData();
-
-    $address_data = [
-      'country_code' => 'GB',
-      'organization' => $webformSubmission['business_name'],
-      'locality' => $webformSubmission['address_town'],
-      'postal_code' => $webformSubmission['address_postcode'],
-      'address_line1' => $webformSubmission['address_line_1'],
-      'address_line2' => $webformSubmission['address_line_2'],
-    ];
-
-    $node = Node::create([
-      'type' => 'point_of_interest',
-      'title' => $webformSubmission['business_name'],
-      'field_address' => $address_data,
-      'field_facebook' => $webformSubmission['general_facebook'],
-      'field_instagram' => $webformSubmission['general_instagram'],
-      'field_twitter' => $webformSubmission['general_twitter'],
-      'field_website' => $webformSubmission['general_website'],
-      'field_experience_project_flag' => TRUE,
-      'field_experience_application_id' => $applicationId,
-      'field_accreditation_status' => $applicationProcess->getApplicationStatus(),
-    ]);
-
-    // Save the node.
-    $node->save();
-
     $url = $node->toUrl();
     $url->setOptions(['absolute' => TRUE, 'https' => TRUE]);
 
