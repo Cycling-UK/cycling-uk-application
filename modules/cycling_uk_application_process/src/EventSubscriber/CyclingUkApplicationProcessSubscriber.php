@@ -217,7 +217,7 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
         'field_facebook' => $webformSubmission['general_facebook'],
         'field_instagram' => $webformSubmission['general_instagram'],
         'field_twitter' => $webformSubmission['general_twitter'],
-        'field_website' => $webformSubmission['general_website'],
+        'field_link' => $webformSubmission['general_website'],
         'field_experience_project_flag' => TRUE,
         'field_experience_application_id' => $applicationId,
         'field_accreditation_status' => $applicationProcess->getApplicationStatus(),
