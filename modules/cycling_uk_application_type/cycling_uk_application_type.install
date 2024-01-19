@@ -1,6 +1,32 @@
 <?php
 
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\field\Entity\FieldConfig;
+
+/**
+ * Implements hook_update_N().
+ *
+ * Deletes unused email fields from the application type entity.
+ *
+*/
+function cycling_uk_application_type_update_8004() {
+    // Unused email fields to be deleted.
+    $fields = [
+      'awaiting_confirmation_email',
+      'awaiting_further_info_email',
+      'application_incomplete_email',
+      'application_qualified_email',
+      'email_signature',
+    ];
+
+    foreach ($fields as $field) {
+      $update_manager = \Drupal::entityDefinitionUpdateManager();
+      $definition = $update_manager->getFieldStorageDefinition($field, 'cycling_uk_application_type');
+      $update_manager->uninstallFieldStorageDefinition($definition);
+   }
+
+}
 
 /**
  * Implements hook_update_N().
@@ -35,4 +61,5 @@ function cycling_uk_application_type_update_8002() {
 
       \Drupal::entityDefinitionUpdateManager()
       ->installFieldStorageDefinition('poi', 'cycling_uk_application_type', 'cycling_uk_application_type', $fieldStorageDefinition);
-}
+  }
+
