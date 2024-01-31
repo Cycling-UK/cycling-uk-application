@@ -212,7 +212,10 @@ class CyclingUkDynamicsQueueData {
   private function getDestinationType(string $destinationEntity, string $destinationField): string {
     $dynamicsConnector = $this->getConnector();
 
-    $entity = $dynamicsConnector->getEntityDefinitionByLogicalName($destinationEntity);
+    $force_dev_dynamics = $this->webform->get('third_party_settings')['cycling_uk_dynamics']['force_dev_dynamics'];
+    $env = ($force_dev_dynamics ? "dev" : "prod");
+
+    $entity = $dynamicsConnector->getEntityDefinitionByLogicalName($destinationEntity, $env);
 
     foreach ($entity as $value) {
       if ($value['LogicalName'] == $destinationField) {

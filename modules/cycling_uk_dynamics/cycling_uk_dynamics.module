@@ -122,6 +122,14 @@ function cycling_uk_dynamics_webform_third_party_settings_form_alter(
     ];
   }
 
+  // Add a setting which allows us to force the form to use the dev dynamics endpoint.
+  $form['third_party_settings']['cycling_uk_dynamics']['force_dev_dynamics'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Force dev Dynamics'),
+    '#description' => t('Force this form to use the dev dynamics server (useful for debugging on production)'),
+    '#default_value' => $third_party_settings['force_dev_dynamics'],
+  ];
+
   $form['third_party_settings']['cycling_uk_dynamics']['actions'] = [
     '#type' => 'actions',
   ];

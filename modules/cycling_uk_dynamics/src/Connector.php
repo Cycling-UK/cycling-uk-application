@@ -32,6 +32,13 @@ class Connector {
   protected string $instanceUri;
 
   /**
+   * Eg 'https://xxxx.crm11.dynamics.com/'.
+   *
+   * @var string
+   */
+  protected string $instanceUriDev;
+
+  /**
    * Eg '6d05b2be-24c0-4eac-90b1-f72b78dd6d1a'.
    *
    * @var string
@@ -51,6 +58,13 @@ class Connector {
    * @var string
    */
   protected string $endpoint;
+
+  /**
+   * Eg 'https://xxxx.api.crm11.dynamics.com/api/data/v9.2/'.
+   *
+   * @var string
+   */
+  protected string $endpoint_dev;
 
   /**
    * Eg ['lead', 'contact', 'opportunity'].
@@ -94,9 +108,13 @@ class Connector {
 
     // Unwrap values we need from configuration object.
     $this->instanceUri = $config->get('instance_uri');
+    $this->instanceUriDev = $config->get('instance_uri_dev');
+
     $this->applicationId = $config->get('application_id');
     $this->applicationSecret = $config->get('application_secret');
+
     $this->endpoint = $config->get('endpoint');
+    $this->endpoint_dev = $config->get('endpoint_dev');
     $this->entityWhitelist = $config->get('entity_whitelist');
 
     // Client for talking to Dynamics.
@@ -119,10 +137,10 @@ class Connector {
    *
    * @throws \Doctrine\Common\Annotations\AnnotationException
    */
-  public function getEntityDefinitionByLogicalName(string $logicalName): ?EntityDefinition {
+  public function getEntityDefinitionByLogicalName(string $logicalName, $env = "prod"): ?EntityDefinition {
     $query = 'EntityDefinitions(LogicalName=\'' . $logicalName . '\')?$select=MetadataId';
 
-    $body = $this->executeGetQuery($query);
+    $body = $this->executeGetQuery($query, TRUE, $env);
 
     return $this->getEntityDefinitionByMetadataId($body->MetadataId);
   }
@@ -158,7 +176,7 @@ class Connector {
    *
    * @todo sprinkle some error handling around.
    */
-  protected function executeGetQuery(string $query, $cached = TRUE) {
+  protected function executeGetQuery(string $query, $cached = TRUE, $env = "prod") {
     // Check cache.
     if ($cached && $result = $this->getCachedQuery($query)) {
       return $result;
@@ -167,7 +185,14 @@ class Connector {
     // Unwrap the Guzzle HTTP client to use in our custom query.
     $httpClient = $this->client->getClient()->getHttpClient();
 
-    $url = $this->endpoint . $query;
+    // If we are forcing another environment, then change it here.
+    if ($env === "dev") {
+      $url = $this->endpoint_dev . $query;
+      $this->instanceUri = $this->instanceUriDev;
+    }
+    else {
+      $url = $this->endpoint . $query;
+    }
 
     $result = $httpClient->get($url);
     $result = json_decode((string) $result->getBody());
