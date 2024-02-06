@@ -425,7 +425,7 @@ class Connector {
    */
   public function create(array $queueItem): void {
 
-    $message = 'Dynamics client endpoint URI: ' . $this->client->getClient()->getSettings()->instanceURI;
+    $message = 'Dynamics client endpoint URI ' . $this->client->getClient()->getSettings()->instanceURI . ' used for webform submission ' . $queueItem['drupal_entity_id'];
     \Drupal::logger('cycling_uk_dynamics')->notice($message);
     $entity = new Entity($queueItem['destination_entity']);
 
