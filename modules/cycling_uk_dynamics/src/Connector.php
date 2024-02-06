@@ -424,6 +424,9 @@ class Connector {
    * @throws \Drupal\Core\Entity\EntityStorageException
    */
   public function create(array $queueItem): void {
+
+    $message = 'Dynamics client endpoint URI: ' . $this->client->getClient()->getSettings()->instanceURI;
+    \Drupal::logger('cycling_uk_dynamics')->notice($message);
     $entity = new Entity($queueItem['destination_entity']);
 
     foreach ($queueItem['data'] as $row) {
