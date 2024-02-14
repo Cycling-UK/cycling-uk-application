@@ -102,7 +102,7 @@ class Connector {
     CacheBackendInterface $cacheBackend,
     LoggerChannelFactory $loggerFactory
   ) {
-    $config = $config_factory->get('dynamics.settings');
+    $config = $config_factory->get('cycling_uk_dynamics.settings');
     $this->logger = $loggerFactory->get('dynamics');
     $this->cacheBackend = $cacheBackend;
 
