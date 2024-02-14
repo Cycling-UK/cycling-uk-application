@@ -11,6 +11,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\webform\WebformInterface;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Form\FormStateInterface;
+Use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
  * Implements hook_webform_third_party_settings_form_alter().
@@ -687,4 +688,18 @@ function _dynamics_claim(Node $node) {
   $user = \Drupal::currentUser();
   $node->setOwnerId($user->id());
   $node->save();
+}
+
+
+/**
+ * Implements hook_help().
+ */
+function cycling_uk_dynamics_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Settings page help.
+    case 'cycling_uk_dynamics.settings_form':
+      $output = '<p>API secret should be stored in settings.local or settings.secret.';
+      return $output;
+
+  }
 }
