@@ -127,7 +127,7 @@ function cycling_uk_dynamics_webform_third_party_settings_form_alter(
     '#type' => 'checkbox',
     '#title' => t('Force dev Dynamics'),
     '#description' => t('Force this form to use the dev dynamics server (useful for debugging on production)'),
-    '#default_value' => $third_party_settings['force_dev_dynamics'],
+    '#default_value' => isset($third_party_settings['force_dev_dynamics']) ? $third_party_settings['force_dev_dynamics'] : "",
   ];
 
   $form['third_party_settings']['cycling_uk_dynamics']['actions'] = [
@@ -375,13 +375,14 @@ function _dynamics_source_options_tree(array $elements, string $parent = '') {
 
 function _dynamics_get_type(WebformInterface $webform, $name)
 {
-  if (strpos($name, 'webform') === 0) {
-    return 'textfield';
-  }
+  if (isset($name)) {
+    if (strpos($name, 'webform') === 0) {
+      return 'textfield';
+    }
   $elements = $webform->getElementsInitializedAndFlattened();
   $keys = explode(':', $name);
-
   return _dynamics_get_type_worker($elements, $keys);
+  }
 }
 
 /**
@@ -395,7 +396,7 @@ function _dynamics_get_type(WebformInterface $webform, $name)
 function _dynamics_get_type_worker(array $elements, array $keys) {
   $key = array_shift($keys);
 
-  if (empty($keys)) {
+  if (empty($keys) && $key != 'none') {
     return $elements[$key]['#type'];
   }
 
