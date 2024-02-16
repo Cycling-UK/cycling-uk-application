@@ -1,7 +1,14 @@
 services:
   cycling_uk_dynamics.connector:
+    alias: cycling_uk_dynamics.connector.prod
+
+  cycling_uk_dynamics.connector.dev:
     class: Drupal\cycling_uk_dynamics\Connector
-    arguments: ['@config.factory', '@cache.discovery', '@logger.factory']
+    arguments: ['@config.factory', '@cache.discovery', '@logger.factory', 'dev']
+
+  cycling_uk_dynamics.connector.prod:
+    class: Drupal\cycling_uk_dynamics\Connector
+    arguments: ['@config.factory', '@cache.discovery', '@logger.factory', 'prod']
 
   plugin.manager.dynamics.process:
     class: Drupal\cycling_uk_dynamics\Plugin\ProcessPluginManager

@@ -77,6 +77,8 @@ class CyclingUkDynamicsQueueData {
     $this->webformSubmission = $webformSubmission;
     $data = $webformSubmission->getData();
     $mappings = $webform->getThirdPartySettings('cycling_uk_dynamics');
+    $force_dev = (bool) $mappings['force_dev_dynamics'] ?? FALSE;
+    $env = $force_dev ? 'dev' : 'prod';
 
     $queueSubmissions = [];
 
@@ -102,6 +104,7 @@ class CyclingUkDynamicsQueueData {
           'drupal_entity_id' => $webformSubmission->id(),
           'destination_entity' => $destinationEntity,
           'action' => $action,
+          'env' => $env,
         ];
       }
       $queueSubmissions[$destinationEntity]['data'][] = [
@@ -140,6 +143,7 @@ class CyclingUkDynamicsQueueData {
           'drupal_entity_id' => $webformSubmission->id(),
           'destination_entity' => 'cuk_webformquestion',
           'action' => Connector::CREATE,
+          'env' => $env,
         ];
       }
     }
@@ -172,8 +176,8 @@ class CyclingUkDynamicsQueueData {
    * @return \Drupal\cycling_uk_dynamics\Connector
    *   The Dynamics connector service.
    */
-  protected function getConnector() : Connector {
-    return \Drupal::service('cycling_uk_dynamics.connector');
+  protected function getConnector(string $env) : Connector {
+    return \Drupal::service("cycling_uk_dynamics.connector.$env");
   }
 
   /**
@@ -210,12 +214,12 @@ class CyclingUkDynamicsQueueData {
    *   Type of field.
    */
   private function getDestinationType(string $destinationEntity, string $destinationField): string {
-    $dynamicsConnector = $this->getConnector();
 
     $force_dev_dynamics = $this->webform->get('third_party_settings')['cycling_uk_dynamics']['force_dev_dynamics'];
     $env = ($force_dev_dynamics ? "dev" : "prod");
+    $dynamicsConnector = $this->getConnector($env);
 
-    $entity = $dynamicsConnector->getEntityDefinitionByLogicalName($destinationEntity, $env);
+    $entity = $dynamicsConnector->getEntityDefinitionByLogicalName($destinationEntity);
 
     foreach ($entity as $value) {
       if ($value['LogicalName'] == $destinationField) {
@@ -350,10 +354,11 @@ class CyclingUkDynamicsQueueData {
   protected function buildHeader() {
     $elements = $this->getElements();
     $header = [];
+    $exportConfig = $this->getExportConfig();
 
     // Build element columns headers.
     foreach ($elements as $element) {
-      $header[] = $this->elementManager->invokeMethod('buildExportHeader', $element, $this->getExportConfig());
+      $header[] = $this->elementManager->invokeMethod('buildExportHeader', $element, $exportConfig);
     }
     return $header;
   }
@@ -364,13 +369,14 @@ class CyclingUkDynamicsQueueData {
   protected function buildRecord(WebformSubmissionInterface $webform_submission) {
     $elements = $this->getElements();
     $record = [];
+    $exportConfig = $this->getExportConfig();
     // Build record element columns.
     foreach ($elements as $column_name => $element) {
       $element['#webform_key'] = $column_name;
       $page = $this->getPage($webform_submission, $element);
       $fieldset = $this->getFieldset($webform_submission, $element);
       $record[] = [
-        'value' => $this->elementManager->invokeMethod('buildExportRecord', $element, $webform_submission, $this->getExportConfig()),
+        'value' => $this->elementManager->invokeMethod('buildExportRecord', $element, $webform_submission, $exportConfig),
         'page' => $page ? $page['#title'] : NULL,
         'fieldset' => $fieldset ? $fieldset['#title'] : NULL,
       ];

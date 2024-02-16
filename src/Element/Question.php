@@ -271,7 +271,7 @@ class Question extends WebformCompositeBase {
             break;
 
           case 'details':
-            $title = $element['#details_title'];
+            $title = $element['#details_title'] ?? '';
             break;
 
           case 'comments':

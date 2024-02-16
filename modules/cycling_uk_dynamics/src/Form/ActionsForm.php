@@ -30,8 +30,10 @@ class ActionsForm extends FormBase {
    * Constructor.
    */
   public function __construct() {
+    $config = \Drupal::config('cycling_uk_dynamics.settings');
     // phpcs:ignore
-    $this->dynamicsConnector = \Drupal::service('cycling_uk_dynamics.connector');
+    $env = $config->get('env') ?? 'dev';
+    $this->dynamicsConnector = \Drupal::service("cycling_uk_dynamics.connector.$env");
     // phpcs:ignore
     $this->drupalMessenger = \Drupal::messenger();
   }

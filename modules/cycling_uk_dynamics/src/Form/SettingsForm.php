@@ -29,10 +29,12 @@ class SettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $form['instance_uri'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Instance URI'),
-      '#default_value' => $this->config('cycling_uk_dynamics.settings')->get('instance_uri'),
+    $form['env'] = [
+      '#type' => 'select',
+      '#name' => 'env',
+      '#title' => 'Environment',
+      '#options' => ['dev' => 'Development', 'prod' => 'Live'],
+      '#default_value' => $this->config('cycling_uk_dynamics.settings')->get('env'),
     ];
     $form['application_id'] = [
       '#type' => 'textfield',
@@ -40,8 +42,18 @@ class SettingsForm extends ConfigFormBase {
       '#default_value' => $this->config('cycling_uk_dynamics.settings')->get('application_id'),
     ];
 
+    $form['application_prod_wrapper'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Live settings'),
+    ];
+    $form['application_prod_wrapper']['instance_uri'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Instance URI'),
+      '#default_value' => $this->config('cycling_uk_dynamics.settings')->get('instance_uri'),
+    ];
+
     // @todo can we calculate this rather than setting it?
-    $form['endpoint'] = [
+    $form['application_prod_wrapper']['endpoint'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Endpoint'),
       '#description' => $this->t("Used to execute custom queries the library we're using can't build"),
@@ -110,6 +122,7 @@ class SettingsForm extends ConfigFormBase {
     $config = $this->config('cycling_uk_dynamics.settings');
     $config
       ->set('instance_uri', $form_state->getValue('instance_uri'))
+      ->set('env', $form_state->getValue('env'))
       ->set('instance_uri_dev', $form_state->getValue('instance_uri_dev'))
       ->set('application_id', $form_state->getValue('application_id'))
       ->set('endpoint', $form_state->getValue('endpoint'))
