@@ -87,11 +87,12 @@ class Connector {
     ConfigFactoryInterface $config_factory,
     CacheBackendInterface $cacheBackend,
     LoggerChannelFactory $loggerFactory,
-    string $env
+    string $env = NULL
   ) {
     $config = $config_factory->get('cycling_uk_dynamics.settings');
     $this->logger = $loggerFactory->get('dynamics');
     $this->cacheBackend = $cacheBackend;
+    $env = $env ?: $config->get('env');
 
     // Unwrap values we need from configuration object.
     $uriConfigKey = $env == 'prod' ? 'instance_uri' : 'instance_uri_dev';

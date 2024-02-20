@@ -21,10 +21,11 @@ class DynamicsQueue extends QueueWorkerBase {
    */
   public function processItem($data) {
     $env = $data['env'];
+    $service = $env ? "cycling_uk_dynamics.connector.$env" : 'cycling_uk_dynamics.connector';
     /**
      * @var \Drupal\cycling_uk_dynamics\src\Connector $dynamicsConnector
      */
-    $dynamicsConnector = \Drupal::service("cycling_uk_dynamics.connector.$env");
+    $dynamicsConnector = \Drupal::service($service);
 
     switch ($data['action']) {
       case Connector::CREATE:

@@ -196,9 +196,9 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
       };
 
       if(!$validformdata) {
-        $errorMessage = 'Webform submission does not contain all required fields';
+        $errorMessage = 'Webform submission does not contain all required fields. POI not created.';
         \Drupal::logger('cycling_uk_application')->error($errorMessage);
-        throw new \Exception($errorMessage);
+        return;
       }
 
       $address_data = [
@@ -268,6 +268,8 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
       'stage',
       ''
     );
+    $force_dev = $webform->getThirdPartySetting('cycling_uk_dynamics', 'force_dev_dynamics', FALSE);
+    $env = $force_dev ? 'dev' : NULL;
     $choiceValues = [
       'ready_for_review' => '770970000',
       'awaiting_further_info' => '770970001',
@@ -317,6 +319,7 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
       'destination_entity' => 'cuk_application',
       'destination_id' => $applicationProcess->getDynamicsId(),
       'action' => $action,
+      'env' => $env,
     ];
   }
 
@@ -388,7 +391,6 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
     if (
       $submissionMode == CyclingUkApplicationType::SUBMISSION_MODE_ON_QUALIFICATION
       && $applicationProcess->isQualified()) {
-      $poiNid =$this->createPoiNode($applicationProcess);
       $queueData = $this->queueData->getQueueData($applicationProcess->getWebformSubmission());
       $this->queueLoader->load($queueData);
     }

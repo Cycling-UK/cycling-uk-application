@@ -77,8 +77,8 @@ class CyclingUkDynamicsQueueData {
     $this->webformSubmission = $webformSubmission;
     $data = $webformSubmission->getData();
     $mappings = $webform->getThirdPartySettings('cycling_uk_dynamics');
-    $force_dev = (bool) $mappings['force_dev_dynamics'] ?? FALSE;
-    $env = $force_dev ? 'dev' : 'prod';
+    $force_dev = $webform->getThirdPartySetting('cycling_uk_dynamics', 'force_dev_dynamics', FALSE);
+    $env = $force_dev ? 'dev' : NULL;
 
     $queueSubmissions = [];
 
@@ -177,7 +177,8 @@ class CyclingUkDynamicsQueueData {
    *   The Dynamics connector service.
    */
   protected function getConnector(string $env) : Connector {
-    return \Drupal::service("cycling_uk_dynamics.connector.$env");
+    $service = $env ? "cycling_uk_dynamics.connector.$env" : 'cycling_uk_dynamics.connector';
+    return \Drupal::service($service);
   }
 
   /**
@@ -215,8 +216,8 @@ class CyclingUkDynamicsQueueData {
    */
   private function getDestinationType(string $destinationEntity, string $destinationField): string {
 
-    $force_dev_dynamics = $this->webform->get('third_party_settings')['cycling_uk_dynamics']['force_dev_dynamics'];
-    $env = ($force_dev_dynamics ? "dev" : "prod");
+    $force_dev = $this->webform->getThirdPartySetting('cycling_uk_dynamics', 'force_dev_dynamics', FALSE);
+    $env = $force_dev ? 'dev' : NULL;
     $dynamicsConnector = $this->getConnector($env);
 
     $entity = $dynamicsConnector->getEntityDefinitionByLogicalName($destinationEntity);

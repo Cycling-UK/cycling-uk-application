@@ -1,6 +1,7 @@
 services:
   cycling_uk_dynamics.connector:
-    alias: cycling_uk_dynamics.connector.prod
+    class: Drupal\cycling_uk_dynamics\Connector
+    arguments: ['@config.factory', '@cache.discovery', '@logger.factory']
 
   cycling_uk_dynamics.connector.dev:
     class: Drupal\cycling_uk_dynamics\Connector
