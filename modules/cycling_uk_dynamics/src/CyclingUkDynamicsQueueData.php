@@ -176,7 +176,7 @@ class CyclingUkDynamicsQueueData {
    * @return \Drupal\cycling_uk_dynamics\Connector
    *   The Dynamics connector service.
    */
-  protected function getConnector(string $env) : Connector {
+  protected function getConnector(?string $env) : Connector {
     $service = $env ? "cycling_uk_dynamics.connector.$env" : 'cycling_uk_dynamics.connector';
     return \Drupal::service($service);
   }
