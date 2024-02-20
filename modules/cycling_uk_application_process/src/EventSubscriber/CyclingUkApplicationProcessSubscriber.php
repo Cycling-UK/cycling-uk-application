@@ -349,7 +349,7 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
         // queue pushing the application to dynamics.
         $webformSubmission = WebformSubmission::load($event->getDrupalEntityId());
         $applicationProcess = $this->loadApplicationProcessByWebformSubmission($webformSubmission);
-        if ($applicationProcess && $this->webformHasApplicationHandler($applicationProcess->getWebformSubmission()->getWebform())) {
+        if ($applicationProcess && $this->webformHasApplicationHandler($applicationProcess->getWebformSubmission()->getWebform()) && !$applicationProcess->hasDynamicsId()) {
           $applicationQueueData = $this->getApplicationProcessQueueData($applicationProcess);
           $this->queueLoader->load([$applicationQueueData]);
         }
