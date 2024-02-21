@@ -5,6 +5,7 @@ namespace Drupal\cycling_uk_dynamics;
 use Drupal\Component\EventDispatcher\ContainerAwareEventDispatcher;
 use Drupal\cycling_uk_dynamics\Event\DynamicsQueueItemCreatedEvent;
 use Drupal\cycling_uk_dynamics\Plugin\ProcessPluginInterface;
+use Drupal\file\Entity\File;
 use Drupal\webform\Entity\Webform;
 use Drupal\webform\Entity\WebformSubmission;
 use Drupal\webform\Plugin\WebformElementManagerInterface;
@@ -112,40 +113,37 @@ class CyclingUkDynamicsQueueData {
         'destination_value' => $processPlugin->getDestination(),
       ];
     }
-    $header = $this->buildHeader();
-    $record = $this->buildRecord($webformSubmission);
-    foreach ($record as $elementIndex => $element) {
-      foreach ($element['value'] as $valueIndex => $answer) {
-        $queueSubmissions["cuk_webformquestion_{$elementIndex}_{$valueIndex}"] = [
-          'data' => [
-            [
-              'destination_field' => 'cuk_name',
-              'destination_value' => $header[$elementIndex][$valueIndex],
-            ],
-            [
-              'destination_field' => 'cuk_answerraw',
-              'destination_value' => $answer,
-            ],
-            [
-              'destination_field' => 'cuk_webformguid',
-              'destination_value' => $webformSubmission->uuid(),
-            ],
-            [
-              'destination_field' => 'cuk_webformpagename',
-              'destination_value' => $element['page'],
-            ],
-            [
-              'destination_field' => 'cuk_fieldsetname',
-              'destination_value' => $element['fieldset'],
-            ],
+    $records = $this->buildRecord($webformSubmission);
+    foreach ($records as $index => $record) {
+      $queueSubmissions["cuk_webformquestion_{$index}"] = [
+        'data' => [
+          [
+            'destination_field' => 'cuk_name',
+            'destination_value' => $record['name'],
           ],
-          'drupal_entity_type' => 'webform_question_answer',
-          'drupal_entity_id' => $webformSubmission->id(),
-          'destination_entity' => 'cuk_webformquestion',
-          'action' => Connector::CREATE,
-          'env' => $env,
-        ];
-      }
+          [
+            'destination_field' => 'cuk_answerraw',
+            'destination_value' => $record['value'],
+          ],
+          [
+            'destination_field' => 'cuk_webformguid',
+            'destination_value' => $webformSubmission->uuid(),
+          ],
+          [
+            'destination_field' => 'cuk_webformpagename',
+            'destination_value' => $record['page'],
+          ],
+          [
+            'destination_field' => 'cuk_fieldsetname',
+            'destination_value' => $record['fieldset'],
+          ],
+        ],
+        'drupal_entity_type' => 'webform_question_answer',
+        'drupal_entity_id' => $webformSubmission->id(),
+        'destination_entity' => 'cuk_webformquestion',
+        'action' => Connector::CREATE,
+        'env' => $env,
+      ];
     }
     foreach ($queueSubmissions as $destination => $queueSubmission) {
       $queueItemCreatedEvent = new DynamicsQueueItemCreatedEvent($queueSubmission);
@@ -349,20 +347,6 @@ class CyclingUkDynamicsQueueData {
     return $data[$name] ?? NULL;
   }
 
-  /**
-   * Builds the header of the data to be exported.
-   */
-  protected function buildHeader() {
-    $elements = $this->getElements();
-    $header = [];
-    $exportConfig = $this->getExportConfig();
-
-    // Build element columns headers.
-    foreach ($elements as $element) {
-      $header[] = $this->elementManager->invokeMethod('buildExportHeader', $element, $exportConfig);
-    }
-    return $header;
-  }
 
   /**
    * Builds the data to be exported.
@@ -371,16 +355,53 @@ class CyclingUkDynamicsQueueData {
     $elements = $this->getElements();
     $record = [];
     $exportConfig = $this->getExportConfig();
+    /** @var \Drupal\Core\File\FileUrlGeneratorInterface $file_url_generator */
+    $file_url_generator = \Drupal::service('file_url_generator');
     // Build record element columns.
     foreach ($elements as $column_name => $element) {
       $element['#webform_key'] = $column_name;
       $page = $this->getPage($webform_submission, $element);
       $fieldset = $this->getFieldset($webform_submission, $element);
-      $record[] = [
-        'value' => $this->elementManager->invokeMethod('buildExportRecord', $element, $webform_submission, $exportConfig),
-        'page' => $page ? $page['#title'] : NULL,
-        'fieldset' => $fieldset ? $fieldset['#title'] : NULL,
-      ];
+      $page = $page ? $page['#title'] : NULL;
+      $fieldset = $fieldset ? $fieldset['#title'] : NULL;
+      if ($element['#type'] == 'dynamics_question') {
+        $value = $webform_submission->getElementData($column_name);
+        $value = unserialize($value);
+        $fid = $value['file_fid'] ?? FALSE;
+        $file = $fid ? File::load($fid) : FALSE;
+        $file_url = $file ? $file_url_generator->generateAbsoluteString($file->getFileUri()) : '';
+        $name = $element['#title'];
+        $record[] = [
+          'page' => $page,
+          'fieldset' => $fieldset,
+          'name' => $name . ' - question',
+          'value' => $value['question']['value'] ?? '',
+        ];
+        $record[] = [
+          'page' => $page,
+          'fieldset' => $fieldset,
+          'name' => $name . ' - file',
+          'value' => $file_url,
+        ];
+        $record[] = [
+          'page' => $page,
+          'fieldset' => $fieldset,
+          'name' => $name . ' - details',
+          'value' => $value['details']['value'] ?? '',
+        ];
+      }
+      else {
+        $value = $this->elementManager->invokeMethod('buildExportRecord', $element, $webform_submission, $exportConfig);
+        $header = $this->elementManager->invokeMethod('buildExportHeader', $element, $exportConfig);
+        foreach ($value as $index => $value) {
+          $record[] = [
+            'value' => $value,
+            'page' => $page,
+            'fieldset' => $fieldset,
+            'name' => $header[$index]
+          ];
+        }
+      }
     }
     return $record;
   }
@@ -423,6 +444,8 @@ class CyclingUkDynamicsQueueData {
       'header_prefix_key_delimiter' => '__',
       'likert_answers_format' => 'label',
       'webform' => $this->getWebform(),
+      'options_multiple_format' => 'compact',
+      'options_item_format' => 'label',
     ];
   }
 
