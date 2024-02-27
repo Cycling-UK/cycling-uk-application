@@ -371,11 +371,15 @@ class CyclingUkDynamicsQueueData {
         $file = $fid ? File::load($fid) : FALSE;
         $file_url = $file ? $file_url_generator->generateAbsoluteString($file->getFileUri()) : '';
         $name = $element['#title'];
+        $question = $value['question']['value'] ?? '';
+        if (empty($question)) {
+          continue;
+        }
         $record[] = [
           'page' => $page,
           'fieldset' => $fieldset,
           'name' => $name . ' - question',
-          'value' => $value['question']['value'] ?? '',
+          'value' => $question,
         ];
         $record[] = [
           'page' => $page,
