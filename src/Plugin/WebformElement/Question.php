@@ -457,4 +457,21 @@ class Question extends WebformElementBase {
     ];
   }
 
+    /**
+   * {@inheritdoc}
+   */
+  public function postSave(array &$element, WebformSubmissionInterface $webform_submission, $update = TRUE) {
+    $key = $element['#webform_key'];
+    $data = $webform_submission->getElementData($key);
+    if ($data) {
+      $data = unserialize($data);
+      $file = isset($data['file_fid']) ? File::load($data['file_fid']) : FALSE;
+      if ($file) {
+        /** @var \Drupal\file\FileUsage\FileUsageInterface $file_usage */
+        $file_usage = \Drupal::service('file.usage');
+        $file_usage->add($file, 'webform', 'webform_submission', $webform_submission->id());
+      }
+    }
+  }
+
 }
