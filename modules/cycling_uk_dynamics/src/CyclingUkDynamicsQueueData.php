@@ -369,30 +369,34 @@ class CyclingUkDynamicsQueueData {
         $value = unserialize($value);
         $fid = $value['file_fid'] ?? FALSE;
         $file = $fid ? File::load($fid) : FALSE;
-        $file_url = $file ? $file_url_generator->generateAbsoluteString($file->getFileUri()) : '';
+        $file_url = $file ? $file_url_generator->generateAbsoluteString($file->getFileUri()) : FALSE;
         $name = $element['#title'];
-        $question = $value['question']['value'] ?? '';
-        if (empty($question)) {
-          continue;
+        $question = $value['question']['value'] ?? FALSE;
+        $details = $value['details']['value'] ?? FALSE;
+        if ($question) {
+          $record[] = [
+            'page' => $page,
+            'fieldset' => $fieldset,
+            'name' => $name . ' - question',
+            'value' => $question,
+          ];
         }
-        $record[] = [
-          'page' => $page,
-          'fieldset' => $fieldset,
-          'name' => $name . ' - question',
-          'value' => $question,
-        ];
-        $record[] = [
-          'page' => $page,
-          'fieldset' => $fieldset,
-          'name' => $name . ' - file',
-          'value' => $file_url,
-        ];
-        $record[] = [
-          'page' => $page,
-          'fieldset' => $fieldset,
-          'name' => $name . ' - details',
-          'value' => $value['details']['value'] ?? '',
-        ];
+        if ($file_url) {
+          $record[] = [
+            'page' => $page,
+            'fieldset' => $fieldset,
+            'name' => $name . ' - file',
+            'value' => $file_url,
+          ];
+        }
+        if ($details) {
+          $record[] = [
+            'page' => $page,
+            'fieldset' => $fieldset,
+            'name' => $name . ' - details',
+            'value' => $value['details']['value'] ?? '',
+          ];
+        }
       }
       else {
         $value = $this->elementManager->invokeMethod('buildExportRecord', $element, $webform_submission, $exportConfig);
