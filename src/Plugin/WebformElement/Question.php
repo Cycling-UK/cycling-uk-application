@@ -467,12 +467,18 @@ class Question extends WebformElementBase {
       $data = unserialize($data);
       $file = isset($data['file_fid']) ? File::load($data['file_fid']) : FALSE;
       if ($file) {
+        /** @var \Drupal\Core\File\FileSystem $file_system */
+        $file_system = \Drupal::service('file_system');
         /** @var \Drupal\file\FileRepositoryInterface $file_repository */
         $file_repository = \Drupal::service('file.repository');
+        $destination_uri = "private://webform/{$webform_submission->getWebform()->id()}/{$webform_submission->id()}/{$file->getFilename()}";
+        $file_system->prepareDirectory($destination_uri, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
         $file_repository->move(
           $file,
-          "private://webform/{$webform_submission->getWebform()->id()}/{$webform_submission->id()}/{$file->getFilename()}",
+          $destination_uri
         );
+        $file->setFileUri($destination_uri);
+        $file->save();
         /** @var \Drupal\file\FileUsage\FileUsageInterface $file_usage */
         $file_usage = \Drupal::service('file.usage');
         $file_usage->add($file, 'webform', 'webform_submission', $webform_submission->id());
