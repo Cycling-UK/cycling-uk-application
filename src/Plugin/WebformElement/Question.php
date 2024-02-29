@@ -472,8 +472,9 @@ class Question extends WebformElementBase {
         $file_system = \Drupal::service('file_system');
         /** @var \Drupal\file\FileRepositoryInterface $file_repository */
         $file_repository = \Drupal::service('file.repository');
-        $destination_uri = "private://webform/{$webform_submission->getWebform()->id()}/{$webform_submission->id()}/{$file->getFilename()}";
-        $file_system->prepareDirectory($destination_uri, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
+$destination_directory = "private://webform/{$webform_submission->getWebform()->id()}/{$webform_submission->id()}";
+        $destination_uri = "$destination_directory/{$file->getFilename()}";
+        $file_system->prepareDirectory($destination_directory, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
         $file_repository->move(
           $file,
           $destination_uri
