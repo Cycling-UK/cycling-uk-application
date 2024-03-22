@@ -454,6 +454,7 @@ class CyclingUkDynamicsQueueData {
       'webform' => $this->getWebform(),
       'options_multiple_format' => 'compact',
       'options_item_format' => 'label',
+      'options_single_format' => 'compact',
     ];
   }
 
