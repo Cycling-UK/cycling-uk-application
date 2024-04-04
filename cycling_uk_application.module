@@ -32,6 +32,21 @@ function cycling_uk_application_webform_third_party_settings_form_alter(&$form, 
     '#title' => t('Cycling UK application'),
     '#open' => TRUE,
   ];
+  $form['third_party_settings']['cycling_uk_application']['additional_information'] = [
+    '#markup' => '<p> Make sure the form has the following fields if it generates a point of interest
+     <ul>
+      <li>business_name</li>
+      <li>address_town</li>
+      <li>address_postcode</li>
+      <li>address_line_1</li>
+      <li>address_line_2</li>
+      <li>general_facebook</li>
+      <li>general_twitter</li>
+      <li>general_instagram</li>
+      <li>general_website</li>
+      <li>test text</li>
+    </ul></p>',
+  ];
   $form['third_party_settings']['cycling_uk_application']['stage'] = [
     '#type' => 'select',
     '#title' => t('Stage'),

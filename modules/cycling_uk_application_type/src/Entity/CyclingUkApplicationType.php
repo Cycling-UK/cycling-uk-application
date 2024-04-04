@@ -114,6 +114,13 @@ class CyclingUkApplicationType extends ContentEntityBase implements CyclingUkApp
   /**
    * {@inheritdoc}
    */
+  public function isPoi() {
+    return (bool) $this->get('poi')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function setStatus($status) {
     $this->set('status', $status);
     return $this;
@@ -260,85 +267,6 @@ class CyclingUkApplicationType extends ContentEntityBase implements CyclingUkApp
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    $fields['awaiting_confirmation_email'] = BaseFieldDefinition::create('text_long')
-      ->setLabel(t('Awaiting confirmation email'))
-      ->setDescription(t('The email body sent to the applicant when the application status is Awaiting confirmation.'))
-      ->setRequired(TRUE)
-      ->setDisplayOptions('form', [
-        'type' => 'text_textarea',
-        'weight' => -2,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayOptions('view', [
-        'type' => 'text_default',
-        'label' => 'above',
-        'weight' => -2,
-      ])
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['awaiting_further_info_email'] = BaseFieldDefinition::create('text_long')
-      ->setLabel(t('Awaiting further information email'))
-      ->setDescription(t('The email body sent to the applicant when the application status is Awaiting further information.'))
-      ->setRequired(TRUE)
-      ->setDisplayOptions('form', [
-        'type' => 'text_textarea',
-        'weight' => -2,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayOptions('view', [
-        'type' => 'text_default',
-        'label' => 'above',
-        'weight' => -2,
-      ])
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['application_incomplete_email'] = BaseFieldDefinition::create('text_long')
-      ->setLabel(t('Application incomplete email'))
-      ->setDescription(t('The email body sent to the applicant when the application status is Application incomplete.'))
-      ->setRequired(TRUE)
-      ->setDisplayOptions('form', [
-        'type' => 'text_textarea',
-        'weight' => -2,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayOptions('view', [
-        'type' => 'text_default',
-        'label' => 'above',
-        'weight' => -2,
-      ])
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['application_qualified_email'] = BaseFieldDefinition::create('text_long')
-      ->setLabel(t('Application qualified email'))
-      ->setDescription(t('The email body sent to the applicant when the application status is Application qualified.'))
-      ->setRequired(TRUE)
-      ->setDisplayOptions('form', [
-        'type' => 'text_textarea',
-        'weight' => -2,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayOptions('view', [
-        'type' => 'text_default',
-        'label' => 'above',
-        'weight' => -2,
-      ])
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['email_signature'] = BaseFieldDefinition::create('text_long')
-      ->setLabel(t('Email signature'))
-      ->setRequired(TRUE)
-      ->setDisplayOptions('form', [
-        'type' => 'text_textarea',
-        'weight' => -2,
-      ])
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDisplayOptions('view', [
-        'type' => 'text_default',
-        'label' => 'above',
-        'weight' => -2,
-      ])
-      ->setDisplayConfigurable('view', TRUE);
-
     $fields['title_format'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Application title format'))
       ->setDescription(t('The format of the application title'))
@@ -353,6 +281,29 @@ class CyclingUkApplicationType extends ContentEntityBase implements CyclingUkApp
         'label' => 'hidden',
         'type' => 'string',
         'weight' => -5,
+      ])
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['poi'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Does the application create a Point of Interest'))
+      ->setDescription(t('A boolean indicating whether the cycling uk application type creates a point of interest.'))
+      ->setDefaultValue(TRUE)
+      ->setSetting('on_label', 'Enabled')
+      ->setDisplayOptions('form', [
+        'type' => 'boolean_checkbox',
+        'settings' => [
+          'display_label' => TRUE,
+        ],
+        'weight' => 0,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('view', [
+        'type' => 'boolean',
+        'label' => 'above',
+        'weight' => 0,
+        'settings' => [
+          'format' => 'enabled-disabled',
+        ],
       ])
       ->setDisplayConfigurable('view', TRUE);
 
@@ -378,6 +329,7 @@ class CyclingUkApplicationType extends ContentEntityBase implements CyclingUkApp
         ],
       ])
       ->setDisplayConfigurable('view', TRUE);
+
 
     $fields['application_submission'] = BaseFieldDefinition::create('list_string')
       ->setLabel(t('Application Setting'))
