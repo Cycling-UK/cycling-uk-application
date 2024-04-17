@@ -4,6 +4,7 @@ namespace Drupal\cycling_uk_application\Plugin\WebformElement;
 
 use Drupal\Component\Utility\Bytes;
 use Drupal\Component\Utility\Environment;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
@@ -455,6 +456,36 @@ class Question extends WebformElementBase {
       '#webform_submission' => $webform_submission,
       '#options' => $options,
     ];
+  }
+
+    /**
+   * {@inheritdoc}
+   */
+  public function postSave(array &$element, WebformSubmissionInterface $webform_submission, $update = TRUE) {
+    $key = $element['#webform_key'];
+    $data = $webform_submission->getElementData($key);
+    if ($data) {
+      $data = unserialize($data);
+      $file = isset($data['file_fid']) ? File::load($data['file_fid']) : FALSE;
+      if ($file) {
+        /** @var \Drupal\Core\File\FileSystem $file_system */
+        $file_system = \Drupal::service('file_system');
+        /** @var \Drupal\file\FileRepositoryInterface $file_repository */
+        $file_repository = \Drupal::service('file.repository');
+$destination_directory = "private://webform/{$webform_submission->getWebform()->id()}/{$webform_submission->id()}";
+        $destination_uri = "$destination_directory/{$file->getFilename()}";
+        $file_system->prepareDirectory($destination_directory, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
+        $file_repository->move(
+          $file,
+          $destination_uri
+        );
+        $file->setFileUri($destination_uri);
+        $file->save();
+        /** @var \Drupal\file\FileUsage\FileUsageInterface $file_usage */
+        $file_usage = \Drupal::service('file.usage');
+        $file_usage->add($file, 'webform', 'webform_submission', $webform_submission->id());
+      }
+    }
   }
 
 }

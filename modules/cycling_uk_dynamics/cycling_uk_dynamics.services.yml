@@ -3,6 +3,14 @@ services:
     class: Drupal\cycling_uk_dynamics\Connector
     arguments: ['@config.factory', '@cache.discovery', '@logger.factory']
 
+  cycling_uk_dynamics.connector.dev:
+    class: Drupal\cycling_uk_dynamics\Connector
+    arguments: ['@config.factory', '@cache.discovery', '@logger.factory', 'dev']
+
+  cycling_uk_dynamics.connector.prod:
+    class: Drupal\cycling_uk_dynamics\Connector
+    arguments: ['@config.factory', '@cache.discovery', '@logger.factory', 'prod']
+
   plugin.manager.dynamics.process:
     class: Drupal\cycling_uk_dynamics\Plugin\ProcessPluginManager
     parent: default_plugin_manager

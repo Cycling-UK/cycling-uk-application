@@ -20,10 +20,12 @@ class DynamicsQueue extends QueueWorkerBase {
    * {@inheritdoc}
    */
   public function processItem($data) {
+    $env = $data['env'];
+    $service = $env ? "cycling_uk_dynamics.connector.$env" : 'cycling_uk_dynamics.connector';
     /**
      * @var \Drupal\cycling_uk_dynamics\src\Connector $dynamicsConnector
      */
-    $dynamicsConnector = \Drupal::service('cycling_uk_dynamics.connector');
+    $dynamicsConnector = \Drupal::service($service);
 
     switch ($data['action']) {
       case Connector::CREATE:

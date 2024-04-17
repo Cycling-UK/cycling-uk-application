@@ -131,7 +131,7 @@ class Question extends WebformCompositeBase {
 
           $elements['sub_element']['details'] = [
             '#type' => $element_type,
-            '#title' => $element['#details_title'],
+            '#title' => isset($element['#details_title'])?$element['#details_title']:"",
             '#options' => $element['#details_options'],
             '#title_display' => 'before',
           ];
@@ -271,7 +271,7 @@ class Question extends WebformCompositeBase {
             break;
 
           case 'details':
-            $title = $element['#details_title'];
+            $title = $element['#details_title'] ?? '';
             break;
 
           case 'comments':

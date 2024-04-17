@@ -11,6 +11,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\webform\WebformInterface;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Form\FormStateInterface;
+Use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
  * Implements hook_webform_third_party_settings_form_alter().
@@ -121,6 +122,14 @@ function cycling_uk_dynamics_webform_third_party_settings_form_alter(
       '#suffix' => '</div>',
     ];
   }
+
+  // Add a setting which allows us to force the form to use the dev dynamics endpoint.
+  $form['third_party_settings']['cycling_uk_dynamics']['force_dev_dynamics'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Use the dev Dynamics endpoint'),
+    '#description' => t('Force this form to use the dev dynamics server (useful for debugging on production)'),
+    '#default_value' => isset($third_party_settings['force_dev_dynamics']) ? $third_party_settings['force_dev_dynamics'] : "",
+  ];
 
   $form['third_party_settings']['cycling_uk_dynamics']['actions'] = [
     '#type' => 'actions',
@@ -367,13 +376,14 @@ function _dynamics_source_options_tree(array $elements, string $parent = '') {
 
 function _dynamics_get_type(WebformInterface $webform, $name)
 {
-  if (strpos($name, 'webform') === 0) {
-    return 'textfield';
-  }
+  if (isset($name)) {
+    if (strpos($name, 'webform') === 0) {
+      return 'textfield';
+    }
   $elements = $webform->getElementsInitializedAndFlattened();
   $keys = explode(':', $name);
-
   return _dynamics_get_type_worker($elements, $keys);
+  }
 }
 
 /**
@@ -387,7 +397,7 @@ function _dynamics_get_type(WebformInterface $webform, $name)
 function _dynamics_get_type_worker(array $elements, array $keys) {
   $key = array_shift($keys);
 
-  if (empty($keys)) {
+  if (empty($keys) && $key != 'none') {
     return $elements[$key]['#type'];
   }
 
@@ -678,4 +688,18 @@ function _dynamics_claim(Node $node) {
   $user = \Drupal::currentUser();
   $node->setOwnerId($user->id());
   $node->save();
+}
+
+
+/**
+ * Implements hook_help().
+ */
+function cycling_uk_dynamics_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Settings page help.
+    case 'cycling_uk_dynamics.settings_form':
+      $output = '<p>API secret should be stored in settings.local or settings.secret.';
+      return $output;
+
+  }
 }

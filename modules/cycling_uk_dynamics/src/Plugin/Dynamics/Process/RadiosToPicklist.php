@@ -34,11 +34,12 @@ class RadiosToPicklist implements ProcessPluginInterface {
    */
   public function getDestination() {
     if (!empty($this->data)) {
-      if (count($this->data) == 1) {
-         return array_pop($this->data);
+      if (is_string($this->data)) {
+        return $this->data;
       }
-      return $this->data;
+      if (count($this->data) == 1)  {
+        return array_pop($this->data);
+      }
     }
   }
-
 }

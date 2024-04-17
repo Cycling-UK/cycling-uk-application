@@ -86,17 +86,23 @@ class Connector {
   public function __construct(
     ConfigFactoryInterface $config_factory,
     CacheBackendInterface $cacheBackend,
-    LoggerChannelFactory $loggerFactory
+    LoggerChannelFactory $loggerFactory,
+    ?string $env = NULL
   ) {
-    $config = $config_factory->get('dynamics.settings');
+    $config = $config_factory->get('cycling_uk_dynamics.settings');
     $this->logger = $loggerFactory->get('dynamics');
     $this->cacheBackend = $cacheBackend;
+    $env = $env ?: $config->get('env');
 
     // Unwrap values we need from configuration object.
-    $this->instanceUri = $config->get('instance_uri');
+    $uriConfigKey = $env == 'prod' ? 'instance_uri' : 'instance_uri_dev';
+    $this->instanceUri = $config->get($uriConfigKey);
+    $endpointConfigKey = $env == 'prod' ? 'endpoint' : 'endpoint_dev';
+    $this->endpoint = $config->get($endpointConfigKey);
+
     $this->applicationId = $config->get('application_id');
     $this->applicationSecret = $config->get('application_secret');
-    $this->endpoint = $config->get('endpoint');
+
     $this->entityWhitelist = $config->get('entity_whitelist');
 
     // Client for talking to Dynamics.
@@ -122,7 +128,7 @@ class Connector {
   public function getEntityDefinitionByLogicalName(string $logicalName): ?EntityDefinition {
     $query = 'EntityDefinitions(LogicalName=\'' . $logicalName . '\')?$select=MetadataId';
 
-    $body = $this->executeGetQuery($query);
+    $body = $this->executeGetQuery($query, TRUE);
 
     return $this->getEntityDefinitionByMetadataId($body->MetadataId);
   }
