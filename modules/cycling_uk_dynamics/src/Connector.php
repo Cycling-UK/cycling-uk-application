@@ -165,20 +165,20 @@ class Connector {
    * @todo sprinkle some error handling around.
    */
   protected function executeGetQuery(string $query, $cached = TRUE) {
+    $url = $this->endpoint . $query;
     // Check cache.
-    if ($cached && $result = $this->getCachedQuery($query)) {
+    if ($cached && $result = $this->getCachedQuery($url)) {
       return $result;
     }
 
     // Unwrap the Guzzle HTTP client to use in our custom query.
     $httpClient = $this->client->getClient()->getHttpClient();
 
-    $url = $this->endpoint . $query;
 
     $result = $httpClient->get($url);
     $result = json_decode((string) $result->getBody());
 
-    $this->setCachedQuery($query, $result);
+    $this->setCachedQuery($url, $result);
 
     return $result;
   }
@@ -189,8 +189,8 @@ class Connector {
    * @return mixed
    *   The body of the previously cached query, else FALSE.
    */
-  protected function getCachedQuery($query) {
-    $queryId = md5($query);
+  protected function getCachedQuery($url) {
+    $queryId = md5($url);
 
     $result = $this->cacheBackend->get($queryId);
     return $result->data ?? FALSE;
@@ -199,13 +199,13 @@ class Connector {
   /**
    * Sets a cached query result.
    *
-   * @param string $query
-   *   A query to cache.
+   * @param string $url
+   *   The URL which we're caching the response of.
    * @param mixed $data
    *   A cached data.
    */
-  protected function setCachedQuery(string $query, $data) {
-    $queryId = md5($query);
+  protected function setCachedQuery(string $url, $data) {
+    $queryId = md5($url);
 
     $this
       ->cacheBackend
