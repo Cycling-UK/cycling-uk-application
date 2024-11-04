@@ -411,6 +411,8 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
    * @see self::onApplicationStatusChanged
    */
   public function onDynamicsWebformPush(PreDynamicsWebformPush $event) {
+    $machineName = NULL;
+    $applicationType = NULL;
     $webform = $event->getWebform();
     $webform->getHandlers()->has('application_webform_handler')
       && ($handler = $webform->getHandler('application_webform_handler'))
