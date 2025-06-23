@@ -33,7 +33,15 @@ class TextfieldToString implements ProcessPluginInterface {
    * {@inheritdoc}
    */
   public function getDestination() {
-    return $this->data;
+    $string = $this->data;
+    // Check if string is a URL.
+    if (filter_var($string, FILTER_VALIDATE_URL)) {
+      if (mb_strlen($string) > 250) {
+        // Remove query string from URL.
+        $string = preg_replace('/\\?.*$/', '', $string);
+      }
+    }
+    return $string;
   }
 
 }

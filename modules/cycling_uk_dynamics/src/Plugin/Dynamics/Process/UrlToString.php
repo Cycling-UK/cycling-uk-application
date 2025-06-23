@@ -33,7 +33,12 @@ class UrlToString implements ProcessPluginInterface {
    * {@inheritdoc}
    */
   public function getDestination() {
-    return $this->data;
+    $string = $this->data;
+    if (mb_strlen($string) > 250) {
+      // Remove query string from URL.
+      $string = preg_replace('/\\?.*$/', '', $string);
+    }
+    return $string;
   }
 
 }
