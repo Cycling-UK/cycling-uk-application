@@ -350,7 +350,12 @@ class CyclingUkApplicationProcessSubscriber implements EventSubscriberInterface 
         // Whenever a webform submission is pushed to dynamics, either
         // immediately or once the application process is qualified, we
         // queue pushing the application to dynamics.
-        $webformSubmission = WebformSubmission::load($event->getDrupalEntityId());
+        $submissionId = $event->getDynamicsId();
+        $webformSubmission = WebformSubmission::load($submissionId);
+        if (!$webformSubmission) {
+          \Drupal::logger('cycling_uk_application')->error('Submission ID ' . $submissionId . ' not found. Has it been deleted?');
+          return;
+        }
         $applicationProcess = $this->loadApplicationProcessByWebformSubmission($webformSubmission);
         if ($applicationProcess && $this->webformHasApplicationHandler($applicationProcess->getWebformSubmission()->getWebform()) && !$applicationProcess->hasDynamicsId()) {
           $applicationQueueData = $this->getApplicationProcessQueueData($applicationProcess);
