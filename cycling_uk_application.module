@@ -1,5 +1,12 @@
 <?php
 
+use Drupal\Component\Plugin\Exception\PluginNotFoundException;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\file\Entity\File;
+use Drupal\Core\Url;
+use Drupal\Core\Link;
+use Drupal\Core\Render\Markup;
 use \Drupal\Core\Form\FormStateInterface;
 
 function _cycling_uk_application_application_type_options() {
@@ -23,7 +30,7 @@ function cycling_uk_application_webform_third_party_settings_form_alter(&$form, 
   try {
     $webform->getHandler('application_webform_handler');
   }
-  catch (\Drupal\Component\Plugin\Exception\PluginNotFoundException $e) {
+  catch (PluginNotFoundException $e) {
     return;
   }
 
@@ -99,8 +106,8 @@ function cycling_uk_application_theme() {
  */
 function cycling_uk_application_entity_view_alter(
   array &$build,
-  \Drupal\Core\Entity\EntityInterface $entity,
-  \Drupal\Core\Entity\Display\EntityViewDisplayInterface $display
+  EntityInterface $entity,
+  EntityViewDisplayInterface $display
 ): void {
   if ($entity->getEntityTypeId() === 'webform_submission') {
     $elements = $entity
@@ -166,17 +173,17 @@ function cycling_uk_application_entity_view_alter(
                       if ($key === 'file_fid') {
                         if ($valueItem) {
                           // phpcs:ignore
-                          $file = \Drupal\file\Entity\File::load($valueItem);
+                          $file = File::load($valueItem);
                           $valueItem = [];
                           $valueItem['value'] = '';
                           $valueItem['title'] = $element[$pluginName]['#file_title'];
 
                           if ($file) {
                             $uri = $file->getFileUri();
-                            $url = \Drupal\Core\Url::fromUri(\Drupal::service('file_url_generator')
+                            $url = Url::fromUri(\Drupal::service('file_url_generator')
                               ->generateAbsoluteString($uri));
 
-                            $valueItem['value'] = \Drupal\Core\Link::fromTextAndUrl(
+                            $valueItem['value'] = Link::fromTextAndUrl(
                               $element[$pluginName]['#file_title'],
                               $url
                             );
@@ -205,7 +212,7 @@ function cycling_uk_application_entity_view_alter(
                         $title = $valueItem['title'] . ':';
                       }
 
-                      if ($value instanceof \Drupal\Core\Link) {
+                      if ($value instanceof Link) {
                         $title = '';
                         $value = $value->toString();
                       }
@@ -217,7 +224,7 @@ function cycling_uk_application_entity_view_alter(
                       }
                     }
 
-                    $build['data']['#rows'][$pluginName][1]['data'] = \Drupal\Core\Render\Markup::create($elementValue);
+                    $build['data']['#rows'][$pluginName][1]['data'] = Markup::create($elementValue);
                   }
                 }
                 else {

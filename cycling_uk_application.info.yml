@@ -2,9 +2,8 @@ name: Cycling UK application
 type: module
 description: Provides Cycling UK applications based on Webform with a Dynamics integration.
 package: Cycling UK
-core: 8.x
 version: '1.10.0'
-core_version_requirement:  ^10
+core_version_requirement: ^10 || ^11
 dependencies:
   - drupal:webform
   - cycling_uk_application:cycling_uk_application_type
