@@ -2,12 +2,13 @@
 
 namespace Drupal\cycling_uk_dynamics\Plugin\WebformHandler;
 
-use Drupal\Component\EventDispatcher\ContainerAwareEventDispatcher;
 use Drupal\cycling_uk_dynamics\CyclingUkDynamicsQueueData;
 use Drupal\cycling_uk_dynamics\Event\PreDynamicsWebformPush;
 use Drupal\webform\Plugin\WebformHandlerBase;
 use Drupal\webform\WebformSubmissionInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+
 
 /**
  * Dynamics webform handler.
@@ -42,9 +43,9 @@ final class DynamicsWebformHandler extends WebformHandlerBase {
   /**
    * The event dispatcher.
    *
-   * @var \Drupal\Component\EventDispatcher\ContainerAwareEventDispatcher
+   * @var \Symfony\Contracts\EventDispatcher\EventDispatcherInterface
    */
-  protected ContainerAwareEventDispatcher $eventDispatcher;
+  protected EventDispatcherInterface $eventDispatcher;
 
   /**
    * {@inheritdoc}

@@ -2,7 +2,6 @@
 
 namespace Drupal\cycling_uk_dynamics;
 
-use Drupal\Component\EventDispatcher\ContainerAwareEventDispatcher;
 use Drupal\cycling_uk_dynamics\Event\DynamicsQueueItemCreatedEvent;
 use Drupal\cycling_uk_dynamics\Plugin\ProcessPluginInterface;
 use Drupal\file\Entity\File;
@@ -10,6 +9,7 @@ use Drupal\webform\Entity\Webform;
 use Drupal\webform\Entity\WebformSubmission;
 use Drupal\webform\Plugin\WebformElementManagerInterface;
 use Drupal\webform\WebformSubmissionInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Class which provides a factory method to create dynamics queue data.
@@ -17,16 +17,12 @@ use Drupal\webform\WebformSubmissionInterface;
 class CyclingUkDynamicsQueueData {
 
   /**
-   * Undocumented variable.
-   *
    * @var \Drupal\webform\Entity\Webform
    */
   protected Webform $webform;
 
 
   /**
-   * Undocumented variable.
-   *
    * @var \Drupal\webform\Entity\WebformSubmission
    */
   protected WebformSubmission $webformSubmission;
@@ -34,13 +30,11 @@ class CyclingUkDynamicsQueueData {
   /**
    * The event dispatcher.
    *
-   * @var \Drupal\Component\EventDispatcher\ContainerAwareEventDispatcher
+   * @var \Symfony\Contracts\EventDispatcher\EventDispatcherInterface
    */
-  protected ContainerAwareEventDispatcher $eventDispatcher;
+  protected EventDispatcherInterface $eventDispatcher;
 
   /**
-   * Undocumented variable.
-   *
    * @var array
    */
   protected array $data;
@@ -60,12 +54,10 @@ class CyclingUkDynamicsQueueData {
   protected $elementManager;
 
   /**
-   * Undocumented function.
-   *
-   * @param \Drupal\Component\EventDispatcher\ContainerAwareEventDispatcher $event_dispatcher
+   * @param \Symfony\Contracts\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The event dispatcher.
    */
-  public function __construct(ContainerAwareEventDispatcher $event_dispatcher, WebformElementManagerInterface $element_manager) {
+  public function __construct(EventDispatcherInterface $event_dispatcher, WebformElementManagerInterface $element_manager) {
     $this->eventDispatcher = $event_dispatcher;
     $this->elementManager = $element_manager;
   }
